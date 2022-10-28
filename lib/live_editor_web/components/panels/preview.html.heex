@@ -1,0 +1,12 @@
+<div class="flex flex-col h-full">
+  <div class="flex-none mb-2 p-3 text-sm breadcrumbs shadow-md bg-white">
+    <ul>
+      <li :for={breadcrumb <- @breadcrumbs}><%= breadcrumb %></li>
+    </ul>
+  </div>
+  <div class="flex-grow mx-2 mb-2 p-4 border-2 shadow-md bg-white">
+    <div id="artboard" class="artboard">
+      preview panel
+    </div>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<div class="flex flex-col h-screen">
+  <header id="header_panel">
+    <div class="navbar bg-sky-500">
+      <a class="btn btn-ghost normal-case text-xl">LiveEditor</a>
+    </div>
+  </header>
+
+  <main class="flex flex-grow">
+    <div id="components_panel" class="flex-grow border-r-2 w-1/5 relative">
+      <LiveEditorWeb.Panels.components {assigns}/>
+    </div>
+
+    <div id="preview_panel" class="flex-shrink w-3/5 bg-gray-100 shadow-inner">
+      <LiveEditorWeb.Panels.preview {assigns}/>
+    </div>
+
+    <div id="editor_panel" class="flex-grow border-l-2 w-1/5 relative">
+      <LiveEditorWeb.Panels.editor {assigns}/>
+    </div>
+  </main>
+</div>

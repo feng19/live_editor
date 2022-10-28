@@ -47,7 +47,7 @@ config :live_editor, LiveEditorWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"lib/live_editor_web/(live|views)/.*(ex)$",
+      ~r"lib/live_editor_web/(live|views|components)/.*(ex)$",
       ~r"lib/live_editor_web/templates/.*(eex)$"
     ]
   ]

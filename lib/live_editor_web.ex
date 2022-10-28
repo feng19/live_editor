@@ -49,6 +49,15 @@ defmodule LiveEditorWeb do
     end
   end
 
+  def editor_live_view do
+    quote do
+      use Phoenix.LiveView,
+        layout: {LiveEditorWeb.Layouts, :editor}
+
+      unquote(html_helpers())
+    end
+  end
+
   def live_view do
     quote do
       use Phoenix.LiveView,

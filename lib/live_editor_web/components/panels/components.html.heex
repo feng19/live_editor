@@ -1,0 +1,7 @@
+<div class="absolute bottom-0 left-0 w-full h-full overflow-y-auto">
+  <div class="grid gap-4 grid-cols-3 p-4">
+    <button :for={component<-@components} class="btn btn-primary" phx-click="add_component" value={component}>
+      <%= component %>
+    </button>
+  </div>
+</div>
