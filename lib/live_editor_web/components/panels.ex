@@ -1,5 +1,5 @@
 defmodule LiveEditorWeb.Panels do
-  use Phoenix.Component
+  use LiveEditorWeb, :live_component
 
   embed_templates "panels/*"
 end

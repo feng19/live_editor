@@ -1,7 +1,32 @@
 <div class="absolute bottom-0 right-0 w-full h-full overflow-y-auto">
-  <div class="m-4">
-    <div :for={attr<-@attrs} class="h-8 mb-4 bg-gray-100">
-      <%= attr %>
+  <button class="btn" phx-click="remove_component" value={@select_id}>remove</button>
+  <form class="m-4" phx-change="attr_changed">
+    <%= @select_id %>
+    <div class="space-y-4 bg-white mt-10">
+      <%= for attr<-@attrs do %>
+        <div class="form-control" :if={attr.type==:string || attr.type==:global}>
+          <label class="label">
+            <span class="label-text"><%= attr.name %></span>
+            <input type="text" name={attr.name} value={attr[:value]} class="input input-bordered"/>
+          </label>
+        </div>
+
+        <div class="form-control" :if={attr.type==:boolean}>
+          <label class="label cursor-pointer">
+            <span class="label-text"><%= attr.name %></span>
+            <input type="checkbox" name={attr.name} checked={attr[:value] || attr[:opts][:default]} class="checkbox"/>
+          </label>
+        </div>
+
+        <div class="form-control" :if={attr.type==:atom}>
+          <label class="label cursor-pointer">
+            <span class="label-text"><%= attr.name %>: <%= attr[:value] %></span>
+            <% checked = attr[:value] || attr[:opts][:default] %>
+            <input type="radio" class="radio" :for={value<-attr[:opts][:values]} name={attr.name} value={value}
+                   checked={checked==value} />
+          </label>
+        </div>
+      <% end %>
     </div>
-  </div>
+  </form>
 </div>

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "daisyui": "^2.33.0"
+    "daisyui": "^2.33.0",
+    "sortablejs": "^1.15.0"
   }
 }
