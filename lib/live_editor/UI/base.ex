@@ -50,7 +50,12 @@ defmodule LiveEditor.UI.Base do
 
   defp example_preview(:label) do
     %{
-      slots: [inner_block: ~s(<input name="username" value="Kevin" />)]
+      slots: [
+        inner_block: """
+        <.error message="please input new value for this input"/>
+        <input name="username" value="Kevin" />
+        """
+      ]
     }
   end
 
