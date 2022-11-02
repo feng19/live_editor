@@ -1,46 +1,54 @@
 defmodule LiveEditor.UI.Heroicons do
   @moduledoc false
+  alias LiveEditor.ComponentRender
 
-  def components(endpoint) do
+  def components do
     Heroicons.__components__()
     |> Stream.filter(&match?({_, %{kind: :def}}, &1))
+    |> Stream.map(fn {name, c} -> {name, Map.delete(c, :kind)} end)
+    |> Enum.sort_by(&elem(&1, 0))
     |> Enum.map(fn {name, component} ->
+      component =
+        Map.merge(component, %{
+          name: to_string(name),
+          module: Heroicons,
+          fun_name: name
+        })
+
+      menu_button = ComponentRender.render(%{component | attrs: []})
       rest = Enum.find(component.attrs, &match?(%{name: :rest}, &1))
 
       attrs = [
-        %{
-          name: :kind,
-          type: :atom,
-          opts: [default: :outline, values: [:outline, :solid, :mini]],
-          required: false,
-          slot: nil,
-          doc: nil
-        },
-        rest
+        {"kind",
+         %{
+           name: :kind,
+           type: :atom,
+           value: nil,
+           opts: [default: :outline, values: [:outline, :solid, :mini]],
+           required: false,
+           slot: nil,
+           doc: nil
+         }},
+        {"rest", Map.put(rest, :value, class: "w-12")}
       ]
 
-      preview = LiveEditor.UI.Helper.render_component(endpoint, {Heroicons, name}, [])
-
       Map.merge(component, %{
-        name: to_string(name),
-        module: Heroicons,
-        fun_name: name,
         attrs: attrs,
-        assigns: [class: "w-12"],
-        assigns_handler: &__MODULE__.handle_assigns/1,
-        # render: &__MODULE__.render/3,
-        preview: preview
+        render: &__MODULE__.render/1,
+        menu_button: menu_button,
+        example_preview: nil
       })
     end)
   end
 
-  def handle_assigns(assigns) do
-    Enum.reduce(assigns, [], fn
-      {:kind, style}, acc ->
+  defp handle_attrs(attrs) do
+    Enum.reduce(attrs, [], fn
+      {"kind", %{value: style}}, acc ->
         case style do
+          nil -> acc
           :outline -> acc
-          :solid -> [{:solid, true} | acc]
-          :mini -> [{:mini, true} | acc]
+          :solid -> [{"solid", %{name: style, value: true}} | acc]
+          :mini -> [{"mini", %{name: style, value: true}} | acc]
         end
 
       item, acc ->
@@ -49,11 +57,8 @@ defmodule LiveEditor.UI.Heroicons do
     |> Enum.reverse()
   end
 
-#  def render(component, assigns, endpoint) do
-#    LiveEditor.UI.Helper.render_component(
-#      endpoint,
-#      {component.module, component.fun_name},
-#      assigns
-#    )
-#  end
+  def render(component) do
+    attrs = handle_attrs(component.attrs)
+    ComponentRender.render(%{component | attrs: attrs})
+  end
 end

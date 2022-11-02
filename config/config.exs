@@ -10,7 +10,10 @@ import Config
 # Configures the endpoint
 config :live_editor, LiveEditorWeb.Endpoint,
   url: [host: "localhost"],
-  render_errors: [formats: [html: LiveEditorWeb.ErrorHTML, json: LiveEditorWeb.ErrorJSON], layout: false],
+  render_errors: [
+    formats: [html: LiveEditorWeb.ErrorHTML, json: LiveEditorWeb.ErrorJSON],
+    layout: false
+  ],
   pubsub_server: LiveEditor.PubSub,
   live_view: [signing_salt: "qPdN9Ae8"]
 
@@ -25,11 +28,18 @@ config :esbuild,
   ]
 
 # Configure tailwind (the version is required)
+tailwind_config =
+  if Mix.env() == :dev do
+    "tailwind-dev.config.js"
+  else
+    "tailwind.config.js"
+  end
+
 config :tailwind,
   version: "3.1.8",
   default: [
     args: ~w(
-      --config=tailwind.config.js
+      --config=#{tailwind_config}
       --input=css/app.css
       --output=../priv/static/assets/app.css
     ),
