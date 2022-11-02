@@ -2,63 +2,83 @@
   <div :if={@select_id}>
     <button class="btn" phx-click="remove_component" value={@select_id}>remove</button>
     <%= @select_id %>
-
     <!-- attrs -->
     <form class="m-4" phx-change="attr_changed">
       <div class="space-y-4 bg-white mt-10">
         <%= for {name, attr}<-@select_component.attrs do %>
-        <div class="form-control" :if={attr.type==:string}>
-          <label class="label">
-            <span class="label-text">
-              <span :if={attr.required}>*</span><%= name %>
-            </span>
-            <input type="text" name={name} value={attr[:value]} placeholder={attr.doc} class="input input-bordered"/>
-          </label>
-        </div>
+          <div :if={attr.type == :string} class="form-control">
+            <label class="label">
+              <span class="label-text">
+                <span :if={attr.required}>*</span><%= name %>
+              </span>
+              <input
+                type="text"
+                name={name}
+                value={attr[:value]}
+                placeholder={attr.doc}
+                class="input input-bordered"
+              />
+            </label>
+          </div>
 
-        <div class="form-control" :if={attr.type==:global}>
-          <label class="label">
-            <span class="label-text">
-              <span :if={attr.required}>*</span><%= name %>
-            </span>
-            <input type="text" name={name} value={attr[:value] && inspect(attr[:value])} placeholder={attr.doc} class="input input-bordered"/>
-          </label>
-        </div>
+          <div :if={attr.type == :global} class="form-control">
+            <label class="label">
+              <span class="label-text">
+                <span :if={attr.required}>*</span><%= name %>
+              </span>
+              <input
+                type="text"
+                name={name}
+                value={attr[:value] && inspect(attr[:value])}
+                placeholder={attr.doc}
+                class="input input-bordered"
+              />
+            </label>
+          </div>
 
-        <div class="form-control" :if={attr.type==:boolean}>
-          <label class="label cursor-pointer">
-            <span class="label-text">
-              <span :if={attr.required}>*</span><%= name %>
-            </span>
-            <input type="checkbox" name={name} checked={attr[:value] || attr[:opts][:default]} class="checkbox"/>
-          </label>
-        </div>
+          <div :if={attr.type == :boolean} class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">
+                <span :if={attr.required}>*</span><%= name %>
+              </span>
+              <input
+                type="checkbox"
+                name={name}
+                checked={attr[:value] || attr[:opts][:default]}
+                class="checkbox"
+              />
+            </label>
+          </div>
 
-        <div class="form-control" :if={attr.type==:atom}>
-          <label class="label cursor-pointer">
-            <span class="label-text">
-              <span :if={attr.required}>*</span><%= name %>
-            </span>
-            <% checked = attr[:value] || attr[:opts][:default] %>
-            <%= for value <- attr[:opts][:values] do %>
-            <%= value %>
-            <input type="radio" class="radio" name={name} value={value} checked={checked==value} />
-            <% end %>
-          </label>
-        </div>
+          <div :if={attr.type == :atom} class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">
+                <span :if={attr.required}>*</span><%= name %>
+              </span>
+              <% checked = attr[:value] || attr[:opts][:default] %>
+              <%= for value <- attr[:opts][:values] do %>
+                <%= value %>
+                <input
+                  type="radio"
+                  class="radio"
+                  name={name}
+                  value={value}
+                  checked={checked == value}
+                />
+              <% end %>
+            </label>
+          </div>
         <% end %>
-
       </div>
     </form>
-
     <!-- slots -->
     <form class="m-4" phx-change="slot_changed">
       <div class="space-y-4 bg-white mt-10">
-        <div class="form-control" :for={{name,slot}<-@select_component.slots}>
+        <div :for={{name, slot} <- @select_component.slots} class="form-control">
           <label class="label">
-          <span class="label-text">
-            <span :if={slot.required}>*</span><%= name %>
-          </span>
+            <span class="label-text">
+              <span :if={slot.required}>*</span><%= name %>
+            </span>
             <textarea name={name} class="textarea textarea-bordered h-24" placeholder="Bio"><%= slot[:value] %></textarea>
           </label>
         </div>

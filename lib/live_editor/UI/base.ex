@@ -52,7 +52,7 @@ defmodule LiveEditor.UI.Base do
     %{
       slots: [
         inner_block: """
-        <.error message="please input new value for this input"/>
+        <.error>please input new value for this input</.error>
         <input name="username" value="Kevin" />
         """
       ]
@@ -61,7 +61,7 @@ defmodule LiveEditor.UI.Base do
 
   defp example_preview(:error) do
     %{
-      attrs: [message: "error message"]
+      slots: [inner_block: "error message"]
     }
   end
 

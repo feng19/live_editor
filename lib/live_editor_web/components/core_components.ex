@@ -152,7 +152,12 @@ defmodule LiveEditorWeb.CoreComponents do
         <%= @title %>
       </p>
       <p class="mt-2 text-[0.8125rem] leading-5"><%= msg %></p>
-      <button :if={@close} type="button" class="group absolute top-2 right-1 p-2" aria-label="close">
+      <button
+        :if={@close}
+        type="button"
+        class="group absolute top-2 right-1 p-2"
+        aria-label="close"
+      >
         <Heroicons.x_mark solid class="h-5 w-5 stroke-current opacity-40 group-hover:opacity-70" />
       </button>
     </div>
@@ -249,13 +254,12 @@ defmodule LiveEditorWeb.CoreComponents do
   attr :value, :any
   attr :field, :any, doc: "a %Phoenix.HTML.Form{}/field name tuple, for example: {f, :email}"
   attr :errors, :list
-  attr :rest, :global, include: ~w(autocomplete checked disabled form max maxlength min minlength
+  attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
+  attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
+  attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
+  attr :rest, :global, include: ~w(autocomplete disabled form max maxlength min minlength
                                    multiple pattern placeholder readonly required size step)
   slot :inner_block
-
-  slot :option, doc: "the slot for select input options" do
-    attr :value, :any
-  end
 
   def input(%{field: {f, field}} = assigns) do
     assigns
@@ -268,13 +272,19 @@ defmodule LiveEditorWeb.CoreComponents do
   end
 
   def input(%{type: "checkbox"} = assigns) do
+    assigns = assign_new(assigns, :checked, fn -> input_equals?(assigns.value, "true") end)
+
     ~H"""
     <label phx-feedback-for={@name} class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
+      <input type="hidden" name={@name} value="false" />
       <input
         type="checkbox"
         id={@id || @name}
         name={@name}
+        value="true"
+        checked={@checked}
         class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+        {@rest}
       />
       <%= @label %>
     </label>
@@ -291,9 +301,10 @@ defmodule LiveEditorWeb.CoreComponents do
         class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
         {@rest}
       >
-        <option :for={opt <- @option} {assigns_to_attributes(opt)}><%= render_slot(opt) %></option>
+        <option :if={@prompt}><%= @prompt %></option>
+        <%= Phoenix.HTML.Form.options_for_select(@options, @value) %>
       </select>
-      <.error :for={msg <- @errors} message={msg} />
+      <.error :for={msg <- @errors}><%= msg %></.error>
     </div>
     """
   end
@@ -312,8 +323,10 @@ defmodule LiveEditorWeb.CoreComponents do
           "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400 phx-no-feedback:focus:ring-zinc-800/5"
         ]}
         {@rest}
-      ><%= @value %></textarea>
-      <.error :for={msg <- @errors} message={msg} />
+      >
+
+    <%= @value %></textarea>
+      <.error :for={msg <- @errors}><%= msg %></.error>
     </div>
     """
   end
@@ -335,7 +348,7 @@ defmodule LiveEditorWeb.CoreComponents do
         ]}
         {@rest}
       />
-      <.error :for={msg <- @errors} message={msg} />
+      <.error :for={msg <- @errors}><%= msg %></.error>
     </div>
     """
   end
@@ -363,13 +376,13 @@ defmodule LiveEditorWeb.CoreComponents do
   @doc """
   Generates a generic error message.
   """
-  attr :message, :string, required: true
+  slot :inner_block, required: true
 
   def error(assigns) do
     ~H"""
     <p class="phx-no-feedback:hidden mt-3 flex gap-3 text-sm leading-6 text-rose-600">
       <Heroicons.exclamation_circle mini class="mt-0.5 h-5 w-5 flex-none fill-rose-500" />
-      <%= @message %>
+      <%= render_slot(@inner_block) %>
     </p>
     """
   end
@@ -410,7 +423,7 @@ defmodule LiveEditorWeb.CoreComponents do
       </.table>
   """
   attr :id, :string, required: true
-  attr :row_click, JS, default: nil
+  attr :row_click, :any, default: nil
   attr :rows, :list, required: true
 
   slot :col, required: true do
@@ -426,15 +439,11 @@ defmodule LiveEditorWeb.CoreComponents do
         <thead class="text-left text-[0.8125rem] leading-6 text-zinc-500">
           <tr>
             <th :for={col <- @col} class="p-0 pb-4 pr-6 font-normal"><%= col[:label] %></th>
-            <th class="relative p-0 pb-4"><span class="sr-only">"Actions"</span></th>
+            <th class="relative p-0 pb-4"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody class="relative divide-y divide-zinc-100 border-t border-zinc-200 text-sm leading-6 text-zinc-700">
-          <tr
-            :for={row <- @rows}
-            id={"#{@id}-#{row.id}"}
-            class="group hover:bg-zinc-50"
-          >
+          <tr :for={row <- @rows} id={"#{@id}-#{row.id}"} class="group hover:bg-zinc-50">
             <td
               :for={{col, i} <- Enum.with_index(@col)}
               phx-click={@row_click && @row_click.(row)}
@@ -562,11 +571,18 @@ defmodule LiveEditorWeb.CoreComponents do
   end
 
   @doc """
-  Translates an error message.
+  Translates an error message using gettext.
   """
-  def translate_error({msg, opts}) do
-    # Because the error messages we show in our forms and APIs
-    # are defined inside Ecto, we need to translate them dynamically.
+  def translate_error({msg, _opts}) do
+    # You can make use of gettext to translate error messages by
+    # uncommenting and adjusting the following code:
+
+    # if count = opts[:count] do
+    #   Gettext.dngettext(LiveEditorWeb.Gettext, "errors", msg, msg, count, opts)
+    # else
+    #   Gettext.dgettext(LiveEditorWeb.Gettext, "errors", msg, opts)
+    # end
+
     Enum.reduce(opts, msg, fn {key, value}, acc ->
       String.replace(acc, "%{#{key}}", fn _ -> to_string(value) end)
     end)
@@ -577,5 +593,9 @@ defmodule LiveEditorWeb.CoreComponents do
   """
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
+  end
+
+  defp input_equals?(val1, val2) do
+    Phoenix.HTML.html_escape(val1) == Phoenix.HTML.html_escape(val2)
   end
 end
