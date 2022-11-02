@@ -573,7 +573,7 @@ defmodule LiveEditorWeb.CoreComponents do
   @doc """
   Translates an error message using gettext.
   """
-  def translate_error({msg, _opts}) do
+  def translate_error({msg, opts}) do
     # You can make use of gettext to translate error messages by
     # uncommenting and adjusting the following code:
 
