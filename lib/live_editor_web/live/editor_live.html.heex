@@ -11,7 +11,11 @@
     </div>
 
     <div id="preview_panel" class="flex-shrink w-3/5 bg-gray-100 shadow-inner">
+      <%= if @code do %>
+      <LiveEditorWeb.Panels.code {assigns} />
+      <% else %>
       <LiveEditorWeb.Panels.preview {assigns} />
+      <% end %>
     </div>
 
     <div id="editor_panel" class="flex-grow border-l-2 w-1/5 relative">

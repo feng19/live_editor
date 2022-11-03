@@ -1,0 +1,47 @@
+<div class="divider"> Attrs </div>
+<form class="m-4" phx-change="attr_changed">
+  <div class="space-y-4 bg-white mt-10">
+    <%= for {name, attr}<-@select_component.attrs do %>
+    <div :if={attr.type==:string} class="form-control">
+      <label class="label">
+        <span class="label-text">
+          <span :if={attr.required}>*</span><%= name %>
+        </span>
+        <input type="text" name={name} value={attr[:value]} placeholder={attr.doc} class="input input-bordered"/>
+      </label>
+    </div>
+
+    <div :if={attr.type==:global} class="form-control">
+      <label class="label">
+        <span class="label-text">
+          <span :if={attr.required}>*</span><%= name %>
+        </span>
+        <input type="text" name={name} value={attr[:value] && inspect(attr[:value])} placeholder={attr.doc}
+               class="input input-bordered"/>
+      </label>
+    </div>
+
+    <div :if={attr.type==:boolean} class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">
+          <span :if={attr.required}>*</span><%= name %>
+        </span>
+        <input type="checkbox" name={name} checked={attr[:value] || attr[:opts][:default]} class="checkbox"/>
+      </label>
+    </div>
+
+    <div :if={attr.type==:atom} class="form-control">
+      <label class="label cursor-pointer">
+      <span class="label-text">
+        <span :if={attr.required}>*</span><%= name %>
+      </span>
+        <% checked = attr[:value] || attr[:opts][:default] %>
+        <%= for value <- attr[:opts][:values] do %>
+        <%= value %>
+        <input type="radio" class="radio" name={name} value={value} checked={checked == value}/>
+        <% end %>
+      </label>
+    </div>
+    <% end %>
+  </div>
+</form>

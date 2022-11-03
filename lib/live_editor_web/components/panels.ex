@@ -1,5 +1,5 @@
 defmodule LiveEditorWeb.Panels do
-  use LiveEditorWeb, :live_component
+  use LiveEditorWeb, :html
 
   embed_templates "panels/*"
 end

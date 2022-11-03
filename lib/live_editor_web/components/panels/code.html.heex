@@ -1,0 +1,12 @@
+<div class="flex flex-col h-full">
+  <div class="flex-none mb-2 p-3 h-14 text-sm shadow-md bg-white">
+    <div :if={@select_id}>
+      <%= @select_id %>
+      <button class="btn btn-sm" phx-click="hide_code" value={@select_id}> back to preview</button>
+    </div>
+  </div>
+
+  <pre class="flex-grow mx-2 mb-2 p-2 border-2 shadow-md highlight cursor-text">
+<code><%= @code %></code>
+  </pre>
+</div>

@@ -17,7 +17,8 @@ defmodule LiveEditorWeb.EditorLive do
        meta_previews: [],
        previews: [],
        select_id: nil,
-       select_component: nil
+       select_component: nil,
+       code: nil
      )}
   end
 
@@ -35,13 +36,15 @@ defmodule LiveEditorWeb.EditorLive do
     id = "ld-#{System.os_time(:millisecond)}"
     index = Map.get(params, "index", -1)
     meta_previews = List.insert_at(assigns.meta_previews, index, {id, component})
-    preview = render_component(component)
+    rendered = render_component(component)
+    preview = %{rendered: rendered, class: component[:preview_class]}
     previews = List.insert_at(assigns.previews, index, {id, preview})
 
     socket =
       assign(socket,
         meta_previews: meta_previews,
         previews: previews,
+        code: nil,
         select_id: id,
         select_component: component
       )
@@ -104,7 +107,13 @@ defmodule LiveEditorWeb.EditorLive do
     previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
 
     socket =
-      assign(socket, meta_previews: meta_previews, previews: previews, select_component: component)
+      socket
+      |> assign(
+        meta_previews: meta_previews,
+        previews: previews,
+        select_component: component
+      )
+      |> code_changed()
 
     {:noreply, socket}
   end
@@ -155,6 +164,14 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, socket}
   end
 
+  def handle_event("show_code", _params, socket) do
+    {:noreply, show_code(socket)}
+  end
+
+  def handle_event("hide_code", _params, socket) do
+    {:noreply, assign(socket, code: nil)}
+  end
+
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
@@ -171,5 +188,19 @@ defmodule LiveEditorWeb.EditorLive do
     else
       _ -> ComponentRender.render(component)
     end
+  end
+
+  defp code_changed(socket) do
+    if socket.assigns.code do
+      show_code(socket)
+    else
+      socket
+    end
+  end
+
+  defp show_code(socket) do
+    assigns = socket.assigns
+    code = LiveEditor.CodeRender.render_heex(assigns.select_component)
+    assign(socket, code: code)
   end
 end

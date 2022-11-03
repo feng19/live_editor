@@ -36,6 +36,7 @@ defmodule LiveEditor.UI.Heroicons do
         attrs: attrs,
         render: &__MODULE__.render/1,
         menu_button: menu_button,
+        preview_class: "inline-block",
         example_preview: nil
       })
     end)
