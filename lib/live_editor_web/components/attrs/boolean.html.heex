@@ -1,0 +1,8 @@
+<div class="form-control">
+  <label class="label cursor-pointer">
+    <span class="label-text">
+      <span :if={@attr.required}>*</span><%= @attr.name %>
+    </span>
+    <input type="checkbox" name={@attr.name} checked={@attr[:value] || @attr[:opts][:default]} class="checkbox"/>
+  </label>
+</div>

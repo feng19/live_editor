@@ -1,5 +1,5 @@
 <div class="absolute bottom-0 left-0 w-full h-full overflow-y-auto">
-  <div :for={group <- @groups} class="collapse collapse-open border-b border-base-300">
+  <div :for={group<-@groups} class="collapse collapse-open border-b border-base-300">
     <div
       class="collapse-title text-xl font-medium"
       phx-click={JS.toggle(to: "#g-#{group.name}", in: "fade-in-scale", out: "fade-out-scale")}
@@ -10,7 +10,7 @@
     <div class="collapse-content border-t border-base-200 hidden" id={"g-"<> group.name}>
       <div class="grid gap-4 grid-cols-3 p-4" phx-hook="Draggable" id={"g-list-"<> group.name}>
         <div
-          :for={component <- group.components}
+          :for={component<-group.components}
           class="tooltip tooltip-bottom draggable"
           draggable="true"
           data-tip={component.name}

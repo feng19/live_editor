@@ -1,0 +1,9 @@
+<div class="form-control">
+  <label class="label">
+    <span class="label-text">
+      <span :if={@attr.required}>*</span><%= @attr.name %>
+    </span>
+    <input type="text" name={@attr.name} value={@attr[:value] && inspect(@attr[:value])} placeholder={@attr.doc}
+           class="input input-bordered"/>
+  </label>
+</div>

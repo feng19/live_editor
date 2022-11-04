@@ -7,19 +7,19 @@
 
   <main class="flex flex-grow">
     <div id="components_panel" class="flex-grow border-r-2 w-1/5 relative">
-      <LiveEditorWeb.Panels.components {assigns} />
+      <LiveEditorWeb.Panels.components groups={@groups} />
     </div>
 
     <div id="preview_panel" class="flex-shrink w-3/5 bg-gray-100 shadow-inner">
       <%= if @code do %>
-      <LiveEditorWeb.Panels.code {assigns} />
+      <LiveEditorWeb.Panels.code select_id={@select_id} code={@code} />
       <% else %>
-      <LiveEditorWeb.Panels.preview {assigns} />
+      <LiveEditorWeb.Panels.preview select_id={@select_id} previews={@previews} />
       <% end %>
     </div>
 
     <div id="editor_panel" class="flex-grow border-l-2 w-1/5 relative">
-      <LiveEditorWeb.Panels.editor {assigns} />
+      <LiveEditorWeb.Panels.editor select_id={@select_id} select_component={@select_component} />
     </div>
   </main>
 </div>
