@@ -14,11 +14,11 @@ defmodule LiveEditorWeb.EditorLive do
      assign(socket,
        groups: groups,
        breadcrumbs: ["home", "1", "2"],
-       meta_previews: [],
-       previews: [],
+       code: nil,
        select_id: nil,
        select_component: nil,
-       code: nil
+       previews: [],
+       meta_previews: []
      )}
   end
 
@@ -35,20 +35,7 @@ defmodule LiveEditorWeb.EditorLive do
     # todo set id
     id = "ld-#{System.os_time(:millisecond)}"
     index = Map.get(params, "index", -1)
-    meta_previews = List.insert_at(assigns.meta_previews, index, {id, component})
-    rendered = render_component(component)
-    preview = %{rendered: rendered, class: component[:preview_class]}
-    previews = List.insert_at(assigns.previews, index, {id, preview})
-
-    socket =
-      assign(socket,
-        meta_previews: meta_previews,
-        previews: previews,
-        code: nil,
-        select_id: id,
-        select_component: component
-      )
-
+    socket = add_component(component, id, index, socket)
     {:noreply, socket}
   end
 
@@ -66,21 +53,17 @@ defmodule LiveEditorWeb.EditorLive do
           Map.put(attr, :value, value == "on")
 
         :global ->
-          if attr.name == :rest do
-            # todo don't use Code.eval_string/1
-            rest = Code.eval_string(value) |> elem(0) |> Map.new()
+          # todo don't use Code.eval_string/1
+          rest = Code.eval_string(value) |> elem(0) |> Map.new()
 
-            value =
-              if old = attr[:value] do
-                Map.new(old) |> Map.merge(rest) |> Map.to_list()
-              else
-                rest
-              end
+          value =
+            if old = attr[:value] do
+              Map.new(old) |> Map.merge(rest) |> Map.to_list()
+            else
+              rest
+            end
 
-            Map.put(attr, :value, value)
-          else
-            attr
-          end
+          Map.put(attr, :value, value)
 
         :atom ->
           value = String.to_existing_atom(value)
@@ -177,19 +160,46 @@ defmodule LiveEditorWeb.EditorLive do
     List.insert_at(list, new_index, item)
   end
 
-  defp component_changed(component, socket) do
-    %{select_id: curr_id, previews: previews, meta_previews: meta_previews} = socket.assigns
-    meta_previews = List.keyreplace(meta_previews, curr_id, 0, {curr_id, component})
-    preview = %{rendered: render_component(component), class: component[:preview_class]}
-    previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
+  defp add_component(component, id, index, socket) do
+    case render_component(component) do
+      {:error, error_msg} ->
+        put_flash(socket, :error, error_msg)
 
-    socket
-    |> assign(
-      meta_previews: meta_previews,
-      previews: previews,
-      select_component: component
-    )
-    |> code_changed()
+      rendered ->
+        %{previews: previews, meta_previews: meta_previews} = socket.assigns
+        meta_previews = List.insert_at(meta_previews, index, {id, component})
+        preview = %{rendered: rendered, class: component[:preview_class]}
+        previews = List.insert_at(previews, index, {id, preview})
+
+        assign(socket,
+          code: nil,
+          select_id: id,
+          select_component: component,
+          previews: previews,
+          meta_previews: meta_previews
+        )
+    end
+  end
+
+  defp component_changed(component, socket) do
+    case render_component(component) do
+      {:error, error_msg} ->
+        put_flash(socket, :error, error_msg)
+
+      rendered ->
+        %{select_id: curr_id, previews: previews, meta_previews: meta_previews} = socket.assigns
+        meta_previews = List.keyreplace(meta_previews, curr_id, 0, {curr_id, component})
+        preview = %{rendered: rendered, class: component[:preview_class]}
+        previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
+
+        socket
+        |> assign(
+          select_component: component,
+          previews: previews,
+          meta_previews: meta_previews
+        )
+        |> maybe_show_code()
+    end
   end
 
   defp render_component(component) do
@@ -199,9 +209,19 @@ defmodule LiveEditorWeb.EditorLive do
     else
       _ -> ComponentRender.render(component)
     end
+  rescue
+    reason ->
+      error_msg = Exception.format(:error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      {:error, error_msg}
+  catch
+    error, reason ->
+      error_msg = Exception.format(error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      {:error, error_msg}
   end
 
-  defp code_changed(socket) do
+  defp maybe_show_code(socket) do
     if socket.assigns.code do
       show_code(socket)
     else

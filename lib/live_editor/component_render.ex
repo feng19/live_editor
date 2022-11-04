@@ -58,7 +58,7 @@ defmodule LiveEditor.ComponentRender do
     %{line: line, string: string, assigns: assigns}
   end
 
-  def render(component, env_or_opts \\ env()) do
+  def render(component, raw? \\ true, env_or_opts \\ env()) do
     %{line: line, string: string, assigns: assigns} = component_code(component)
 
     quoted_code =
@@ -76,8 +76,18 @@ defmodule LiveEditor.ComponentRender do
         env_or_opts
       end
 
-    {evaluated, _} = Code.eval_quoted(quoted_code, [assigns: assigns], env_or_opts)
-    Phoenix.LiveView.Engine.live_to_iodata(evaluated)
+    rendered =
+      Code.eval_quoted(quoted_code, [assigns: assigns], env_or_opts)
+      |> elem(0)
+      |> Phoenix.LiveView.Engine.live_to_iodata()
+
+    if raw? do
+      rendered
+      |> Phoenix.HTML.Safe.to_iodata()
+      |> Phoenix.HTML.raw()
+    else
+      rendered
+    end
   end
 
   defp merge_component_module_to_env(module, env) do

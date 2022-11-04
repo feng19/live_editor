@@ -18,15 +18,19 @@ defmodule LiveEditor.CodeRender do
 
     string
     |> String.replace("{@attrs}", attrs)
-    |> format_heex()
+    |> format_heex(true)
   end
 
-  def format_heex(nil), do: nil
-  def format_heex(""), do: nil
+  def format_heex(code, format? \\ false)
+  def format_heex(nil, _), do: nil
+  def format_heex("", _), do: nil
 
-  def format_heex(code) do
-    code
-    |> Phoenix.LiveView.HTMLFormatter.format([])
+  def format_heex(code, format?) do
+    if format? do
+      Phoenix.LiveView.HTMLFormatter.format(code, [])
+    else
+      code
+    end
     |> String.trim()
     |> HEExLexer.lex()
     |> HTMLFormatter.format_inner_as_binary([])
