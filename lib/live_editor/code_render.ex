@@ -21,14 +21,20 @@ defmodule LiveEditor.CodeRender do
     |> format_heex()
   end
 
+  def format_heex(nil), do: nil
+  def format_heex(""), do: nil
+
   def format_heex(code) do
     code
-    |> String.trim()
     |> Phoenix.LiveView.HTMLFormatter.format([])
+    |> String.trim()
     |> HEExLexer.lex()
     |> HTMLFormatter.format_inner_as_binary([])
     |> HTML.raw()
   end
+
+  def format_elixir(nil), do: nil
+  def format_elixir(""), do: nil
 
   def format_elixir(code) do
     code

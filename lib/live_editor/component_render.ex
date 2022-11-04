@@ -37,7 +37,7 @@ defmodule LiveEditor.ComponentRender do
 
     {line, string} =
       if not Enum.empty?(slots) do
-        slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n  ")
+        slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n")
         module = inspect(component.module)
 
         {

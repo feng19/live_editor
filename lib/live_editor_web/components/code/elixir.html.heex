@@ -1,0 +1,5 @@
+<div {@rest}>
+  <pre class="highlight cursor-text overflow-auto" contenteditable="true" phx-hook="ContentEditable" id={"slot-" <> @id}>
+<code><%= LiveEditor.CodeRender.format_elixir(@code) %></code>
+  </pre>
+</div>

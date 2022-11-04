@@ -1,6 +1,6 @@
 import Sortable from 'sortablejs';
 
-export default {
+const Draggable = {
   mounted() {
     const hook = this;
     let id = this.el.id;
@@ -53,3 +53,5 @@ export default {
     }
   },
 };
+
+export default Draggable;

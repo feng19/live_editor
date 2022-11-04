@@ -6,7 +6,7 @@
       <button class="btn btn-sm" phx-click="show_code" value={@select_id}>show code</button>
     </div>
   </div>
-  <div class="flex-grow mx-2 mb-2 p-4 border-2 shadow-md bg-white" id="artboard" phx-hook="Drag">
+  <div class="flex-grow mx-2 mb-2 p-4 border-2 shadow-md bg-white" id="artboard" phx-hook="Draggable">
     <div :for={{id, preview}<-@previews} id={id} draggable="true" class={if @select_id== id do
     "draggable border border-indigo-600 #{preview.class}"
     else

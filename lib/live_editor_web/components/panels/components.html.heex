@@ -8,7 +8,7 @@
     </div>
 
     <div class="collapse-content border-t border-base-200 hidden" id={"g-"<> group.name}>
-      <div class="grid gap-4 grid-cols-3 p-4" phx-hook="Drag" id={"g-list-"<> group.name}>
+      <div class="grid gap-4 grid-cols-3 p-4" phx-hook="Draggable" id={"g-list-"<> group.name}>
         <div
           :for={component <- group.components}
           class="tooltip tooltip-bottom draggable"

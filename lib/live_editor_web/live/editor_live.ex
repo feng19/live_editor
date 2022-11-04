@@ -55,16 +55,9 @@ defmodule LiveEditorWeb.EditorLive do
   def handle_event("attr_changed", params, socket) do
     [target] = params["_target"]
     value = params[target]
-
-    %{
-      select_id: curr_id,
-      select_component: component,
-      previews: previews,
-      meta_previews: meta_previews
-    } = socket.assigns
-
+    component = socket.assigns.select_component
     attrs = component.attrs
-    {_, attr} = List.keyfind(attrs, target, 0)
+    attr = List.keyfind(attrs, target, 0) |> elem(1)
     Logger.info(inspect(attr, label: "old attr"))
 
     attr =
@@ -101,19 +94,22 @@ defmodule LiveEditorWeb.EditorLive do
       end
 
     Logger.info(inspect(attr, label: "new attr"))
-    component = %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
-    meta_previews = List.keyreplace(meta_previews, curr_id, 0, {curr_id, component})
-    preview = render_component(component)
-    previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
 
     socket =
-      socket
-      |> assign(
-        meta_previews: meta_previews,
-        previews: previews,
-        select_component: component
-      )
-      |> code_changed()
+      %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
+      |> component_changed(socket)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("slot_changed", %{"id" => slot_name, "content" => content}, socket) do
+    component = socket.assigns.select_component
+    slots = component.slots
+    slot = List.keyfind(slots, slot_name, 0) |> elem(1) |> Map.put(:value, content)
+
+    socket =
+      %{component | slots: List.keyreplace(slots, slot_name, 0, {slot_name, slot})}
+      |> component_changed(socket)
 
     {:noreply, socket}
   end
@@ -181,6 +177,21 @@ defmodule LiveEditorWeb.EditorLive do
     List.insert_at(list, new_index, item)
   end
 
+  defp component_changed(component, socket) do
+    %{select_id: curr_id, previews: previews, meta_previews: meta_previews} = socket.assigns
+    meta_previews = List.keyreplace(meta_previews, curr_id, 0, {curr_id, component})
+    preview = %{rendered: render_component(component), class: component[:preview_class]}
+    previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
+
+    socket
+    |> assign(
+      meta_previews: meta_previews,
+      previews: previews,
+      select_component: component
+    )
+    |> code_changed()
+  end
+
   defp render_component(component) do
     with render when not is_nil(render) <- component[:render],
          true <- is_function(render, 1) do
@@ -199,8 +210,7 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   defp show_code(socket) do
-    assigns = socket.assigns
-    code = LiveEditor.CodeRender.render_heex(assigns.select_component)
+    code = LiveEditor.CodeRender.render_heex(socket.assigns.select_component)
     assign(socket, code: code)
   end
 end
