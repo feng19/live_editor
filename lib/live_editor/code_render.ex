@@ -7,6 +7,10 @@ defmodule LiveEditor.CodeRender do
   alias LiveEditor.ComponentRender
 
   def render_heex(component) do
+    component |> component_string() |> format_heex()
+  end
+
+  def component_string(component) do
     %{string: string, assigns: assigns} = ComponentRender.component_code(component)
 
     attrs =
@@ -16,21 +20,15 @@ defmodule LiveEditor.CodeRender do
         {k, v} -> Enum.join([k, "\"#{v}\""], "=")
       end)
 
-    string
-    |> String.replace("{@attrs}", attrs)
-    |> format_heex(true)
+    String.replace(string, "{@attrs}", attrs)
+    |> Phoenix.LiveView.HTMLFormatter.format([])
   end
 
-  def format_heex(code, format? \\ false)
-  def format_heex(nil, _), do: nil
-  def format_heex("", _), do: nil
+  def format_heex(nil), do: nil
+  def format_heex(""), do: nil
 
-  def format_heex(code, format?) do
-    if format? do
-      Phoenix.LiveView.HTMLFormatter.format(code, [])
-    else
-      code
-    end
+  def format_heex(code) do
+    code
     |> String.trim()
     |> HEExLexer.lex()
     |> HTMLFormatter.format_inner_as_binary([])

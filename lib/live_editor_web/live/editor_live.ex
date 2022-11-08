@@ -85,18 +85,6 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, socket}
   end
 
-  def handle_event("slot_changed", %{"id" => slot_name, "content" => content}, socket) do
-    component = socket.assigns.select_component
-    slots = component.slots
-    slot = List.keyfind(slots, slot_name, 0) |> elem(1) |> Map.put(:value, content)
-
-    socket =
-      %{component | slots: List.keyreplace(slots, slot_name, 0, {slot_name, slot})}
-      |> component_changed(socket)
-
-    {:noreply, socket}
-  end
-
   def handle_event("select_component", %{"id" => id}, socket) do
     assigns = socket.assigns
 
@@ -149,6 +137,29 @@ defmodule LiveEditorWeb.EditorLive do
 
   def handle_event("hide_code", _params, socket) do
     {:noreply, assign(socket, code: nil)}
+  end
+
+  def handle_event("code_changed", %{"id" => id, "code" => code}, socket) do
+    socket =
+      case id do
+        "code" -> assign(socket, code: code)
+        "slot-" <> slot_name -> slot_changed(socket, slot_name, code)
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("format_code", %{"lang" => lang, "code" => code}, socket) do
+    code =
+      case lang do
+        "heex" ->
+          LiveEditor.CodeRender.format_heex(code) |> elem(1) |> IO.iodata_to_binary()
+
+        "elixir" ->
+          LiveEditor.CodeRender.format_elixir(code) |> elem(1) |> IO.iodata_to_binary()
+      end
+
+    {:reply, %{code: code}, socket}
   end
 
   def handle_event(_event, _params, socket) do
@@ -230,7 +241,17 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   defp show_code(socket) do
-    code = LiveEditor.CodeRender.render_heex(socket.assigns.select_component)
+    # code = LiveEditor.CodeRender.render_heex(socket.assigns.select_component)
+    code = LiveEditor.CodeRender.component_string(socket.assigns.select_component)
     assign(socket, code: code)
+  end
+
+  defp slot_changed(socket, slot_name, content) do
+    component = socket.assigns.select_component
+    slots = component.slots
+    slot = List.keyfind(slots, slot_name, 0) |> elem(1) |> Map.put(:value, content)
+
+    %{component | slots: List.keyreplace(slots, slot_name, 0, {slot_name, slot})}
+    |> component_changed(socket)
   end
 end

@@ -1,0 +1,4 @@
+<div id={@id <> "-editor-wrap"} phx-update="ignore" {@rest}>
+  <div id={@id <> "-editor"}></div>
+</div>
+<input id={@id <> "-input"} data-id={@id} data-lang={@lang} data-editor={@id <> "-editor"} type="hidden" phx-change="code_changed" phx-hook="CodeEditor" value={@code}/>

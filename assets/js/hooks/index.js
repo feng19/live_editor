@@ -1,7 +1,7 @@
 import Draggable from "./draggable";
-import ContentEditable from "./content_editable";
+import CodeEditor from "./code_editor";
 
 export default {
   Draggable,
-  ContentEditable
+  CodeEditor
 }
