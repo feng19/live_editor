@@ -4,7 +4,7 @@
       class="collapse-title text-xl font-medium"
       phx-click={JS.toggle(to: "#g-#{group.name}", in: "fade-in-scale", out: "fade-out-scale")}
     >
-      <%= group.name %>
+      <%= group.label %>
     </div>
 
     <div class="collapse-content border-t border-base-200 hidden" id={"g-"<> group.name}>

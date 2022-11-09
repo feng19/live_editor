@@ -1,7 +1,7 @@
 <div class="form-control">
-  <label class="label">
-    <span class="label-text">
-      list-<span :if={@attr.required}>*</span><%= @attr.name %>
+  <label class="input-group">
+    <span>
+      <%= if @attr.required, do: "*" %>list-<%= @attr.name %>
     </span>
     <input type="text" name={@attr.name} value={@attr[:value] && inspect(@attr[:value])} placeholder={@attr.doc}
            class="input input-bordered"/>

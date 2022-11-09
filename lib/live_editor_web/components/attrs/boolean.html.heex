@@ -1,7 +1,7 @@
 <div class="form-control">
-  <label class="label cursor-pointer">
-    <span class="label-text">
-      <span :if={@attr.required}>*</span><%= @attr.name %>
+  <label class="input-group">
+    <span>
+      <%= if @attr.required, do: "*" %><%= @attr.name %>
     </span>
     <input type="checkbox" name={@attr.name} checked={@attr[:value] || @attr[:opts][:default]} class="checkbox"/>
   </label>

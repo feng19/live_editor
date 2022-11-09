@@ -6,3 +6,13 @@
     <% end %>
   </div>
 </form>
+
+<div class="form-control m-4" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
+  <label class="input-group">
+    <input phx-update="ignore" id="attr-add-input" type="text" class="input input-bordered"/>
+    <button type="button" class="btn btn-square" id="attr-add-button" phx-hook="ClickWithInputValue"
+            data-event="add_global_attr" data-target="attr-add-input" >
+      <Heroicons.plus_small />
+    </button>
+  </label>
+</div>

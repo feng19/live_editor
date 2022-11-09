@@ -1,12 +1,11 @@
 <div class="form-control">
-  <label class="label cursor-pointer">
-    <span class="label-text">
-      <span :if={@attr.required}>*</span><%= @attr.name %>
+  <label class="input-group">
+    <span>
+      <%= if @attr.required, do: "*" %><%= @attr.name %>
     </span>
-    <% checked = @attr[:value] || @attr[:opts][:default] %>
-    <%= for value <- @attr[:opts][:values] do %>
-      <%= value %>
-      <input type="radio" class="radio" name={@attr.name} value={value} checked={checked == value}/>
-    <% end %>
+    <% selected = @attr[:value] || @attr[:opts][:default] %>
+    <select name={@attr.name} class="select select-bordered">
+      <option :for={value<-@attr[:opts][:values]} selected={selected == value}><%= value %></option>
+    </select>
   </label>
 </div>

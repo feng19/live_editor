@@ -6,8 +6,9 @@ defmodule LiveEditorWeb.EditorLive do
 
   def mount(_params, _session, socket) do
     groups = [
-      %{name: "Heroicons", components: UI.Heroicons.components()},
-      %{name: "Base", components: UI.Base.components()}
+      %{label: "Base", name: "base", components: UI.Base.components()},
+      %{label: "Core", name: "core", components: UI.Core.components()},
+      %{label: "Hero Icons", name: "hero_icons", components: UI.Heroicons.components()}
     ]
 
     {:ok,
@@ -40,12 +41,12 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   def handle_event("attr_changed", params, socket) do
-    [target] = params["_target"]
+    [target | _] = params["_target"]
     value = params[target]
     component = socket.assigns.select_component
     attrs = component.attrs
     attr = List.keyfind(attrs, target, 0) |> elem(1)
-    Logger.info(inspect(attr, label: "old attr"))
+    # Logger.info(inspect(attr, label: "old attr"))
 
     attr =
       case attr.type do
@@ -53,15 +54,15 @@ defmodule LiveEditorWeb.EditorLive do
           Map.put(attr, :value, value == "on")
 
         :global ->
-          # todo don't use Code.eval_string/1
-          rest = Code.eval_string(value) |> elem(0) |> Map.new()
+          rest = Map.new(value, fn {k, v} -> {String.to_existing_atom(k), v} end)
 
           value =
             if old = attr[:value] do
-              Map.new(old) |> Map.merge(rest) |> Map.to_list()
+              Map.new(old) |> Map.merge(rest)
             else
               rest
             end
+            |> Map.to_list()
 
           Map.put(attr, :value, value)
 
@@ -76,7 +77,39 @@ defmodule LiveEditorWeb.EditorLive do
           attr
       end
 
-    Logger.info(inspect(attr, label: "new attr"))
+    # Logger.info(inspect(attr, label: "new attr"))
+
+    socket =
+      %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
+      |> component_changed(socket)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("add_global_attr", %{"value" => ""}, socket), do: {:noreply, socket}
+
+  def handle_event("add_global_attr", %{"value" => key}, socket) do
+    component = socket.assigns.select_component
+    attrs = component.attrs
+    {target, attr} = Enum.find(attrs, &match?({_, %{type: :global}}, &1))
+    key = String.to_atom(key)
+    value = attr[:value] |> List.wrap() |> Keyword.put(key, "") |> Enum.sort_by(&elem(&1, 0))
+    attr = Map.put(attr, :value, value)
+
+    socket =
+      %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
+      |> component_changed(socket)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("remove_global_attr", %{"global-name" => target, "value" => key}, socket) do
+    component = socket.assigns.select_component
+    attrs = component.attrs
+    attr = List.keyfind(attrs, target, 0) |> elem(1)
+    key = String.to_existing_atom(key)
+    value = Keyword.delete(attr[:value], key)
+    attr = Map.put(attr, :value, value)
 
     socket =
       %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}

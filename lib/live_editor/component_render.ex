@@ -30,7 +30,7 @@ defmodule LiveEditor.ComponentRender do
 
     let =
       if let = component[:let] do
-        " :let={#{let}}"
+        ":let={#{let}}"
       else
         nil
       end
@@ -38,21 +38,47 @@ defmodule LiveEditor.ComponentRender do
     {line, string} =
       if not Enum.empty?(slots) do
         slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n")
-        module = inspect(component.module)
 
-        {
-          __ENV__.line + 2,
-          """
-          <#{module}.#{component.fun_name}#{let} {@attrs}>
-            #{slots}
-          </#{module}.#{component.fun_name}>
-          """
-        }
+        case component.module do
+          :base ->
+            tag = component.name
+
+            {
+              __ENV__.line + 2,
+              """
+              <#{tag} #{let} {@attrs}>
+                #{slots}
+              </#{tag}>
+              """
+            }
+
+          module ->
+            module = inspect(module)
+            fun_name = component.fun_name
+
+            {
+              __ENV__.line + 2,
+              """
+              <#{module}.#{fun_name} #{let} {@attrs}>
+                #{slots}
+              </#{module}.#{fun_name}>
+              """
+            }
+        end
       else
-        {
-          __ENV__.line + 1,
-          "<#{inspect(component.module)}.#{component.fun_name}#{let} {@attrs}/>"
-        }
+        case component.module do
+          :base ->
+            {
+              __ENV__.line + 1,
+              "<#{component.name} #{let} {@attrs} />"
+            }
+
+          module ->
+            {
+              __ENV__.line + 1,
+              "<#{inspect(module)}.#{component.fun_name} #{let} {@attrs} />"
+            }
+        end
       end
 
     %{line: line, string: string, assigns: assigns}
@@ -89,6 +115,8 @@ defmodule LiveEditor.ComponentRender do
       rendered
     end
   end
+
+  defp merge_component_module_to_env(:base, env), do: env
 
   defp merge_component_module_to_env(module, env) do
     env

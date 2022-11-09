@@ -1,9 +1,13 @@
-<div class="form-control">
-  <label class="label">
-    <span class="label-text">
-      <span :if={@attr.required}>*</span><%= @attr.name %>
-    </span>
-    <input type="text" name={@attr.name} value={@attr[:value] && inspect(@attr[:value])} placeholder={@attr.doc}
-           class="input input-bordered"/>
+<div class="divider"> <%= if @attr.required, do: "*" %><%= @attr.name %> </div>
+<div>value: <%= @attr[:value] && inspect(@attr[:value]) %></div>
+<div :if={@attr.doc}><%= @attr.doc %></div>
+<% list = List.wrap(@attr[:value]) %>
+<div class="form-control" :for={{k,v}<-list}>
+  <label class="input-group">
+    <span><%= k %></span>
+    <input type="text" name={"#{@attr.name}[#{k}]"} value={v} class="input input-bordered w-1/2"/>
+    <button type="button" class="btn btn-square" phx-click="remove_global_attr" phx-value-global-name={@attr.name} value={k}>
+      <Heroicons.minus_small />
+    </button>
   </label>
 </div>
