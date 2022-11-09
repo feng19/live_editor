@@ -1,10 +1,10 @@
 import {CodeJar} from 'codejar';
 import {withLineNumbers} from 'codejar/linenumbers';
 
-let jat;
-let pos;
 
 const CodeEditor = {
+  jat: null,
+  pos: null,
   mounted() {
     let id = this.el.dataset.id;
     let lang = this.el.dataset.lang;
@@ -14,7 +14,7 @@ const CodeEditor = {
       if (code !== "") {
         this.pushEvent("format_code", {id: id, lang: lang, code: code}, (reply, ref) => {
           editor.innerHTML = reply.code;
-          if(pos){ jar.restore(pos); }
+          if(this.pos){ this.jar.restore(this.pos); }
         });
       }
     }
@@ -23,15 +23,15 @@ const CodeEditor = {
       tab: ' '.repeat(2)
     }
 
-    jar = CodeJar(
+    this.jar = CodeJar(
       document.querySelector('#' + editor_id),
       withLineNumbers(highlight),
       options
     );
-    jar.updateCode(this.el.value);
+    this.jar.updateCode(this.el.value);
 
-    jar.onUpdate(code => {
-      pos = jar.save();
+    this.jar.onUpdate(code => {
+      this.pos = this.jar.save();
       code = code.trim();
       old = this.el.value.trim();
       if (code != old) {
@@ -40,11 +40,14 @@ const CodeEditor = {
     });
   },
   updated() {
-    if (jar.toString() !== this.el.value) {
-      pos = jar.save();
-      jar.updateCode(this.el.value);
-      if(pos){ jar.restore(pos); }
+    if (this.jar.toString() !== this.el.value) {
+      this.pos = this.jar.save();
+      this.jar.updateCode(this.el.value);
+      if(this.pos){ this.jar.restore(this.pos); }
     }
+  },
+  destroyed() {
+    this.jar.destroy();
   }
 };
 

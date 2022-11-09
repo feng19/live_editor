@@ -8,8 +8,8 @@
 </form>
 
 <div class="form-control m-4" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
-  <label class="input-group">
-    <input phx-update="ignore" id="attr-add-input" type="text" class="input input-bordered"/>
+  <label class="input-group flex">
+    <input id="attr-add-input" type="text" class="input input-bordered w-auto flex-1"/>
     <button type="button" class="btn btn-square" id="attr-add-button" phx-hook="ClickWithInputValue"
             data-event="add_global_attr" data-target="attr-add-input" >
       <Heroicons.plus_small />

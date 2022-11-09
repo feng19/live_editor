@@ -62,7 +62,7 @@ defmodule LiveEditor.UI.Base do
       |> Enum.map(fn name ->
         %{
           name: to_string(name),
-          module: :base,
+          module: :tag,
           fun_name: name,
           type: type,
           attrs: attrs,
@@ -72,6 +72,31 @@ defmodule LiveEditor.UI.Base do
         }
       end)
     end)
+  end
+
+  defp example_preview(:div) do
+    %{
+      attrs: [rest: [class: "w-full h-15"]],
+      slots: [inner_block: "add something here"]
+    }
+  end
+
+  defp example_preview(tag) when tag in [:p, :span] do
+    %{
+      slots: [inner_block: "add something here"]
+    }
+  end
+
+  defp example_preview(tag) when tag in @group_list do
+    %{
+      slots: [inner_block: "add something here"]
+    }
+  end
+
+  defp example_preview(tag) when tag in [:h1, :h2, :h3, :h4, :h5, :h6] do
+    %{
+      slots: [inner_block: to_string(tag)]
+    }
   end
 
   defp example_preview(_name), do: nil

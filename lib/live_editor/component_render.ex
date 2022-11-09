@@ -40,7 +40,7 @@ defmodule LiveEditor.ComponentRender do
         slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n")
 
         case component.module do
-          :base ->
+          :tag ->
             tag = component.name
 
             {
@@ -67,7 +67,7 @@ defmodule LiveEditor.ComponentRender do
         end
       else
         case component.module do
-          :base ->
+          :tag ->
             {
               __ENV__.line + 1,
               "<#{component.name} #{let} {@attrs} />"
@@ -116,7 +116,7 @@ defmodule LiveEditor.ComponentRender do
     end
   end
 
-  defp merge_component_module_to_env(:base, env), do: env
+  defp merge_component_module_to_env(:tag, env), do: env
 
   defp merge_component_module_to_env(module, env) do
     env

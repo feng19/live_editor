@@ -228,7 +228,8 @@ defmodule LiveEditorWeb.EditorLive do
   defp component_changed(component, socket) do
     case render_component(component) do
       {:error, error_msg} ->
-        put_flash(socket, :error, error_msg)
+        # put_flash(socket, :error, error_msg)
+        socket
 
       rendered ->
         %{select_id: curr_id, previews: previews, meta_previews: meta_previews} = socket.assigns
