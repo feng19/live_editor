@@ -1,6 +1,6 @@
 <div class="divider"> Attrs </div>
 <form class="m-4" phx-change="attr_changed">
-  <div class="space-y-4 bg-white mt-10">
+  <div class="space-y-4 mt-10">
     <%= for {_name, attr}<-@attrs do %>
     <LiveEditorWeb.Attrs.attr attr={attr} />
     <% end %>

@@ -2,9 +2,17 @@ defmodule LiveEditorWeb.EditorLive do
   @moduledoc false
   use LiveEditorWeb, :editor_live_view
   require Logger
+  alias LiveEditorWeb.{Bars, Panels}
   alias LiveEditor.{ComponentRender, UI}
 
   def mount(_params, _session, socket) do
+    left_bar_settings = [
+      %{label: "Add", name: "add", icon: &Heroicons.squares_plus/1},
+      %{label: "Navigator", name: "navigator", icon: &Heroicons.square_3_stack_3d/1}
+      # %{label: "Pages", name: "pages", icon: &Heroicons.document/1},
+      # %{label: "Template", name: "template", icon: &Heroicons.cube_transparent/1}
+    ]
+
     groups = [
       %{label: "Base", name: "base", components: UI.Base.components()},
       %{label: "Core", name: "core", components: UI.Core.components()},
@@ -13,7 +21,9 @@ defmodule LiveEditorWeb.EditorLive do
 
     {:ok,
      assign(socket,
+       left_bar_settings: left_bar_settings,
        groups: groups,
+       left_panel: nil,
        breadcrumbs: ["home", "1", "2"],
        code: nil,
        select_id: nil,
@@ -195,6 +205,21 @@ defmodule LiveEditorWeb.EditorLive do
     {:reply, %{code: code}, socket}
   end
 
+  def handle_event("switch_left_panel", %{"panel" => panel}, socket) do
+    socket =
+      case socket.assigns.left_panel do
+        ^panel -> assign(socket, left_panel: nil)
+        _ -> assign(socket, left_panel: panel)
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("close_left_panel", _, socket) do
+    socket = assign(socket, left_panel: nil)
+    {:noreply, socket}
+  end
+
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
@@ -227,7 +252,7 @@ defmodule LiveEditorWeb.EditorLive do
 
   defp component_changed(component, socket) do
     case render_component(component) do
-      {:error, error_msg} ->
+      {:error, _error_msg} ->
         # put_flash(socket, :error, error_msg)
         socket
 

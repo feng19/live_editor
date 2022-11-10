@@ -1,6 +1,6 @@
 <div class="divider"> Slots</div>
 <div class="m-4">
-  <div class="space-y-4 bg-white mt-10">
+  <div class="space-y-4 mt-10">
     <div :for={{name, slot}<-@slots} class="form-control">
       <div><span :if={slot.required}>*</span><%= name %></div>
       <LiveEditorWeb.Code.heex code={slot[:value]} id={"#{@id}-#{name}"} />

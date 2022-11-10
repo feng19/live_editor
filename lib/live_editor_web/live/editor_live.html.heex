@@ -1,25 +1,7 @@
-<div class="flex flex-col h-screen">
-  <header id="header_panel">
-    <div class="navbar bg-sky-500">
-      <a class="btn btn-ghost normal-case text-xl">LiveEditor</a>
-    </div>
-  </header>
-
-  <main class="flex flex-grow">
-    <div id="components_panel" class="flex-grow border-r-2 w-1/5 relative">
-      <LiveEditorWeb.Panels.components groups={@groups} />
-    </div>
-
-    <div id="preview_panel" class="flex-shrink w-3/5 bg-gray-100 shadow-inner">
-      <%= if @code do %>
-      <LiveEditorWeb.Panels.code select_id={@select_id} code={@code} />
-      <% else %>
-      <LiveEditorWeb.Panels.preview select_id={@select_id} previews={@previews} />
-      <% end %>
-    </div>
-
-    <div id="editor_panel" class="flex-grow border-l-2 w-1/5 relative">
-      <LiveEditorWeb.Panels.editor select_id={@select_id} select_component={@select_component} />
-    </div>
-  </main>
+<div id="ld" class="overflow-hidden">
+  <Bars.top {assigns} />
+  <Bars.left {assigns} />
+  <Bars.workspace {assigns} />
+  <Bars.right {assigns} />
+  <Bars.bottom {assigns} />
 </div>

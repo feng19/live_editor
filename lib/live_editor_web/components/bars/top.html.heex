@@ -1,0 +1,15 @@
+<div id="ld-top-bar">
+  <nav class="align-middle flex justify-between">
+    <div id="ld-top-left" class="w-max">
+      <button class="ld-btn normal-case text-xl">LiveEditor</button>
+    </div>
+    <div id="ld-top-middle" class="flx-1 w-96 border-r border-l border-solid border-gray-600 flex justify-center">
+
+    </div>
+    <div id="ld-top-right" class="w-max h-10 flex">
+      <button class="ld-btn" :if={@select_id} phx-click="remove_component" value={@select_id}>remove</button>
+      <button class="ld-btn" :if={@select_id && is_nil(@code)} phx-click="show_code" value={@select_id}>show code</button>
+      <button class="ld-btn" :if={@code} phx-click="hide_code" value={@select_id}>back to preview</button>
+    </div>
+  </nav>
+</div>

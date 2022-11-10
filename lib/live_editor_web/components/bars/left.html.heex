@@ -1,0 +1,9 @@
+<div id="ld-left-bar" class="flex flex-col w-10">
+  <div :for={s<-@left_bar_settings} class="ld-btn" id={"ld-left-#{s.name}"} phx-hook="SwitchPanel"
+       data-target={"ld-left-panel-#{s.name}"} data-pclass=".ld-left-panel" data-tip={s.label}>
+    <%= Phoenix.LiveView.HTMLEngine.component(s.icon, [], __ENV__) %>
+  </div>
+</div>
+
+<Panels.add groups={@groups}/>
+<Panels.navigator/>

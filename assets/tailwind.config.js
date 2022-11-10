@@ -17,7 +17,7 @@ module.exports = {
     },
   },
   daisyui: {
-    themes: ["corporate"],
+    themes: ["business"],
   },
   plugins: [
     require("@tailwindcss/forms"),

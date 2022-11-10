@@ -1,0 +1,44 @@
+#ld {}
+
+.ld-bar-bg {
+  background: #404040;
+}
+
+#ld-top-bar {
+  color: #ebebeb;
+  @apply ld-bar-bg h-10 w-full pr-64 fixed top-0 z-30 border-b border-solid border-black
+}
+
+#ld-top-bar .ld-btn {
+  @apply btn btn-ghost h-10 min-h-full
+}
+
+#ld-bottom-bar {
+  background: #ebebeb;
+  color: #4d4d4d;
+  @apply h-8 w-full pl-10 pr-64 fixed bottom-0 border-t border-solid border-black
+}
+
+#ld-right-bar {
+  color: #ebebeb;
+  @apply ld-bar-bg h-full w-64 fixed top-0 right-0 z-40 border-l border-solid border-black overflow-y-auto overscroll-y-auto
+}
+
+#ld-left-bar {
+  color: #ebebeb;
+  @apply ld-bar-bg h-full w-10 pt-10 fixed z-10 border-r border-solid border-black
+}
+
+#ld-left-bar .ld-btn {
+  @apply w-10 h-10 mb-2 border-b border-solid border-gray-600 tooltip tooltip-right
+}
+
+.ld-left-panel {
+  @apply ld-bar-bg fixed top-10 left-10 w-64 h-full z-50 border-r border-solid border-black overflow-y-auto overscroll-y-auto
+}
+
+#ld-workspace {
+  width: calc(100% - 2.5rem - 16rem);
+  height: calc(100% - 2.5rem - 2rem);
+  @apply bg-gray-100 top-10 left-10 absolute overflow-auto overscroll-auto
+}

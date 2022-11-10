@@ -1,0 +1,7 @@
+<div id="ld-workspace">
+  <%= if @code do %>
+  <LiveEditorWeb.Code.editor code={@code} id="code" class="h-full mx-2 border-black border-r border-l shadow-md highlight" />
+  <% else %>
+  <Panels.preview select_id={@select_id} previews={@previews} />
+  <% end %>
+</div>

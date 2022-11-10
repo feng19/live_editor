@@ -1,7 +1,8 @@
-<div class="absolute bottom-0 left-0 w-full h-full overflow-y-auto">
-  <div :for={group<-@groups} class="collapse collapse-open border-b border-base-300">
+<div id="ld-left-panel-add" class="hidden ld-left-panel">
+  <div class="m-4 text-2xl">Add</div>
+  <div :for={group<-@groups} class="collapse collapse-open border-b border-black" style="background: #2b2b2b">
     <div
-      class="collapse-title text-xl font-medium"
+      class="collapse-title font-medium"
       phx-click={JS.toggle(to: "#g-#{group.name}", in: "fade-in-scale", out: "fade-out-scale")}
     >
       <%= group.label %>
