@@ -2,8 +2,8 @@ defmodule LiveEditorWeb.EditorLive do
   @moduledoc false
   use LiveEditorWeb, :editor_live_view
   require Logger
-  alias LiveEditorWeb.{Bars, Panels}
-  alias LiveEditor.{ComponentRender, UI}
+  alias LiveEditorWeb.Bars
+  alias LiveEditor.{ComponentRender, CodeRender, UI}
 
   def mount(_params, _session, socket) do
     left_bar_settings = [
@@ -22,6 +22,7 @@ defmodule LiveEditorWeb.EditorLive do
     {:ok,
      assign(socket,
        left_bar_settings: left_bar_settings,
+       nav_items: [],
        groups: groups,
        left_panel: nil,
        breadcrumbs: ["home", "1", "2"],
@@ -148,11 +149,13 @@ defmodule LiveEditorWeb.EditorLive do
         socket
       ) do
     assigns = socket.assigns
+    meta_previews = update_sort(assigns.meta_previews, old_index, new_index)
 
     socket =
       assign(socket,
-        meta_previews: update_sort(assigns.meta_previews, old_index, new_index),
-        previews: update_sort(assigns.previews, old_index, new_index)
+        previews: update_sort(assigns.previews, old_index, new_index),
+        meta_previews: meta_previews,
+        nav_items: calc_nav_items(meta_previews)
       )
 
     {:noreply, socket}
@@ -169,7 +172,11 @@ defmodule LiveEditorWeb.EditorLive do
       else
         socket
       end
-      |> assign(meta_previews: meta_previews, previews: previews)
+      |> assign(
+        previews: previews,
+        meta_previews: meta_previews,
+        nav_items: calc_nav_items(meta_previews)
+      )
 
     {:noreply, socket}
   end
@@ -195,12 +202,11 @@ defmodule LiveEditorWeb.EditorLive do
   def handle_event("format_code", %{"lang" => lang, "code" => code}, socket) do
     code =
       case lang do
-        "heex" ->
-          LiveEditor.CodeRender.format_heex(code) |> elem(1) |> IO.iodata_to_binary()
-
-        "elixir" ->
-          LiveEditor.CodeRender.format_elixir(code) |> elem(1) |> IO.iodata_to_binary()
+        "heex" -> CodeRender.format_heex(code)
+        "elixir" -> CodeRender.format_elixir(code)
       end
+      |> elem(1)
+      |> IO.iodata_to_binary()
 
     {:reply, %{code: code}, socket}
   end
@@ -245,7 +251,8 @@ defmodule LiveEditorWeb.EditorLive do
           select_id: id,
           select_component: component,
           previews: previews,
-          meta_previews: meta_previews
+          meta_previews: meta_previews,
+          nav_items: calc_nav_items(meta_previews)
         )
     end
   end
@@ -266,10 +273,18 @@ defmodule LiveEditorWeb.EditorLive do
         |> assign(
           select_component: component,
           previews: previews,
-          meta_previews: meta_previews
+          meta_previews: meta_previews,
+          nav_items: calc_nav_items(meta_previews)
         )
         |> maybe_show_code()
     end
+  end
+
+  defp calc_nav_items(meta_previews) do
+    Enum.map(meta_previews, fn {id, component} ->
+      children = component |> Map.get(:children, []) |> calc_nav_items()
+      %{id: id, label: component.name, children: children}
+    end)
   end
 
   defp render_component(component) do
@@ -300,8 +315,7 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   defp show_code(socket) do
-    # code = LiveEditor.CodeRender.render_heex(socket.assigns.select_component)
-    code = LiveEditor.CodeRender.component_string(socket.assigns.select_component)
+    code = CodeRender.component_string(socket.assigns.select_component)
     assign(socket, code: code)
   end
 

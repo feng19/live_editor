@@ -1,14 +1,11 @@
 <div id="ld-left-panel-add" class="hidden ld-left-panel">
   <div class="m-4 text-2xl">Add</div>
-  <div :for={group<-@groups} class="collapse collapse-open border-b border-black" style="background: #2b2b2b">
-    <div
-      class="collapse-title font-medium"
-      phx-click={JS.toggle(to: "#g-#{group.name}", in: "fade-in-scale", out: "fade-out-scale")}
-    >
+  <div :for={group<-@groups} class="collapse collapse-open border-b border-black" style="background: #2b2b2b" x-data="{ open: true }">
+    <div class="collapse-title font-medium" @click="open = ! open">
       <%= group.label %>
     </div>
 
-    <div class="collapse-content border-t border-base-200 hidden" id={"g-"<> group.name}>
+    <div class="collapse-content border-t border-base-200" id={"g-"<> group.name} x-show="open">
       <div class="grid gap-4 grid-cols-3 p-4" phx-hook="Draggable" id={"g-list-"<> group.name}>
         <div
           :for={component<-group.components}

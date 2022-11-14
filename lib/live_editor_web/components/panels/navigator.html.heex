@@ -1,3 +1,6 @@
 <div id="ld-left-panel-navigator" class="hidden ld-left-panel">
   <div class="m-4 text-2xl">Navigator</div>
+  <nav class="px-2">
+    <.nav_item :for={item<-@nav_items} item={item} />
+  </nav>
 </div>

@@ -1,13 +1,14 @@
 import Sortable from 'sortablejs';
 
 const Draggable = {
+  sortable: null,
   mounted() {
     const hook = this;
     let id = this.el.id;
     const selector = '#' + id;
     if (id == "artboard") {
       // console.log("Add Sortable for", selector);
-      new Sortable(this.el, {
+      sortable = new Sortable(this.el, {
         animation: 150,
         delayOnTouchOnly: true,
         group: 'shared',
@@ -51,6 +52,9 @@ const Draggable = {
         chosenClass: 'sortable-chosen',
       });
     }
+  },
+  destroyed() {
+    this.sortable.destroy();
   },
 };
 

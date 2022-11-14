@@ -1,0 +1,16 @@
+<%= if Enum.empty?(@item.children) do %>
+<div class="w-full items-center py-2 px-3 text-sm">
+  <!-- todo svg -->
+  <a class="" phx-click="select_component" phx-value-id={@item.id}><%= @item.label %></a>
+</div>
+<% else %>
+<div class="">
+  <div class="w-full items-center rounded-md py-2 px-3 text-left text-sm">
+    <!-- todo svg -->
+    <span phx-click="select_component" phx-value-id={@item.id}><%= @item.label %></span>
+  </div>
+  <div class="ml-4">
+    <.nav_item :for={i<-@item.children} item={i} />
+  </div>
+</div>
+<% end %>
