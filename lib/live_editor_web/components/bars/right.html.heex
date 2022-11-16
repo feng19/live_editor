@@ -1,7 +1,7 @@
 <div id="ld-right-bar">
   <%= if @select_id do %>
     <div class="px-2 space-x-2 h-10 flex items-center">
-      <div class="w-40 text-lg select-all">
+      <div class="text-lg select-all">
         <%= @select_id %>
       </div>
       <button class="ld-btn" :if={is_nil(@code)} phx-click="show_code" value={@select_id}>

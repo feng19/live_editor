@@ -1,9 +1,9 @@
 <.collapse label="Attrs" show={true} >
-  <form class="flex flex-col space-y-4 py-4 px-2 w-full" phx-change="attr_changed">
+  <form class="flex flex-col space-y-4 p-2 w-full" phx-change="attr_changed">
     <LiveEditorWeb.Attrs.attr :for={{_name, attr}<-@attrs} attr={attr} />
   </form>
 
-  <div class="px-2" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
+  <div class="px-2 pb-2" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
     <div class="flex space-x-2 text-sm">
       <span class="w-28">key</span>
       <span class="w-28">value</span>

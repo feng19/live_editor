@@ -25,8 +25,7 @@ defmodule LiveEditorWeb.EditorLive do
         left_bar_settings: left_bar_settings,
         nav_items: [],
         groups: groups,
-        left_panel: nil,
-        breadcrumbs: ["home", "1", "2"],
+        breadcrumbs: [],
         code: nil,
         all_code: nil,
         select_id: nil,
@@ -133,7 +132,8 @@ defmodule LiveEditorWeb.EditorLive do
     socket =
       if assigns.select_id != id do
         {_, component} = List.keyfind(assigns.meta_previews, id, 0)
-        assign(socket, select_id: id, select_component: component)
+        breadcrumbs = calc_breadcrumbs(assigns.nav_items, id)
+        assign(socket, select_id: id, select_component: component, breadcrumbs: breadcrumbs)
       else
         socket
       end
@@ -209,21 +209,6 @@ defmodule LiveEditorWeb.EditorLive do
     {:reply, %{code: code}, socket}
   end
 
-  def handle_event("switch_left_panel", %{"panel" => panel}, socket) do
-    socket =
-      case socket.assigns.left_panel do
-        ^panel -> assign(socket, left_panel: nil)
-        _ -> assign(socket, left_panel: panel)
-      end
-
-    {:noreply, socket}
-  end
-
-  def handle_event("close_left_panel", _, socket) do
-    socket = assign(socket, left_panel: nil)
-    {:noreply, socket}
-  end
-
   def handle_event("read_file", %{"file" => file_path}, socket) do
     components = File.read!(file_path) |> LiveEditor.Parser.parse()
     now = System.os_time(:millisecond)
@@ -247,6 +232,11 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   def handle_event(_event, _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info(info, socket) do
+    Logger.info("info: #{inspect(info)}")
     {:noreply, socket}
   end
 
@@ -312,10 +302,14 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   defp meta_changed(socket, meta_previews) do
+    nav_items = calc_nav_items(meta_previews)
+    breadcrumbs = calc_breadcrumbs(nav_items, socket.assigns.select_id)
+
     assign(
       socket,
       meta_previews: meta_previews,
-      nav_items: calc_nav_items(meta_previews)
+      nav_items: nav_items,
+      breadcrumbs: breadcrumbs
     )
   end
 
@@ -331,6 +325,23 @@ defmodule LiveEditorWeb.EditorLive do
     Enum.map(meta_previews, fn {id, component} ->
       children = component |> Map.get(:children, []) |> calc_nav_items()
       %{id: id, label: component.name, children: children}
+    end)
+  end
+
+  defp calc_breadcrumbs(nav_items, id) do
+    do_calc_breadcrumbs(nav_items, id, []) |> Enum.reverse()
+  end
+
+  defp do_calc_breadcrumbs(items, id, breadcrumbs) do
+    Enum.reduce_while(items, breadcrumbs, fn
+      %{id: ^id, label: label}, acc ->
+        {:halt, [label | acc]}
+
+      %{label: label, children: children}, acc ->
+        case do_calc_breadcrumbs(children, id, []) do
+          [] -> {:cont, acc}
+          new -> {:halt, new ++ [label | acc]}
+        end
     end)
   end
 
@@ -404,6 +415,6 @@ defmodule LiveEditorWeb.EditorLive do
     modal = find_component_from_groups(groups, "core", "modal")
     socket = add_component(modal, "ld-first-modal", -1, socket)
     icon = find_component_from_groups(groups, "hero_icons", "academic_cap")
-    add_component(icon, "ld-first-modal", -1, socket)
+    add_component(icon, "ld-first-icon", -1, socket)
   end
 end

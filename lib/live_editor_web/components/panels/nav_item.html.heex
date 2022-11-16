@@ -1,7 +1,7 @@
 <%= if Enum.empty?(@item.children) do %>
-<div class="w-full items-center py-2 px-3 text-sm">
+<div class="w-full items-center text-sm">
   <!-- todo svg -->
-  <a class="" phx-click="select_component" phx-value-id={@item.id}><%= @item.label %></a>
+  <button class="w-full h-8 text-left" phx-click="select_component" phx-value-id={@item.id}><%= @item.label %></button>
 </div>
 <% else %>
 <div class="">
