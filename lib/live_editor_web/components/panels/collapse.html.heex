@@ -1,0 +1,10 @@
+<div class={"ld-collapse #{@class}"} x-data={"{ open: #{@show} }"}>
+  <div class={"ld-collapse-title #{@title_class}"} @click="open = ! open">
+    <Heroicons.chevron_down mini class="w-6 mx-1" x-bind:class="{ '-rotate-90': ! open }" />
+    <%= @label %>
+  </div>
+
+  <div class={"ld-collapse-content #{@content_class}"} x-show="open">
+    <%= render_slot(@inner_block) %>
+  </div>
+</div>

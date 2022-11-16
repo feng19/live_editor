@@ -35,6 +35,13 @@ defmodule LiveEditor.ComponentRender do
         nil
       end
 
+    for =
+      if for = component[:for] do
+        ":for={#{for}}"
+      else
+        nil
+      end
+
     {line, string} =
       if not Enum.empty?(slots) do
         slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n")
@@ -46,7 +53,7 @@ defmodule LiveEditor.ComponentRender do
             {
               __ENV__.line + 2,
               """
-              <#{tag} #{let} {@attrs}>
+              <#{tag} #{for} #{let} {@attrs}>
                 #{slots}
               </#{tag}>
               """
@@ -59,7 +66,7 @@ defmodule LiveEditor.ComponentRender do
             {
               __ENV__.line + 2,
               """
-              <#{module}.#{fun_name} #{let} {@attrs}>
+              <#{module}.#{fun_name} #{for} #{let} {@attrs}>
                 #{slots}
               </#{module}.#{fun_name}>
               """
@@ -70,13 +77,13 @@ defmodule LiveEditor.ComponentRender do
           :tag ->
             {
               __ENV__.line + 1,
-              "<#{component.name} #{let} {@attrs} />"
+              "<#{component.name} #{for} #{let} {@attrs} />"
             }
 
           module ->
             {
               __ENV__.line + 1,
-              "<#{inspect(module)}.#{component.fun_name} #{let} {@attrs} />"
+              "<#{inspect(module)}.#{component.fun_name} #{for} #{let} {@attrs} />"
             }
         end
       end

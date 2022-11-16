@@ -1,9 +1,6 @@
 <div class="form-control">
-  <label class="input-group">
-    <span>
-      <%= if @attr.required, do: "*" %>list-<%= @attr.name %>
-    </span>
-    <input type="text" name={@attr.name} value={@attr[:value] && inspect(@attr[:value])} placeholder={@attr.doc}
-           class="input input-bordered"/>
+  <label class="flex items-center space-x-2">
+    <span class="w-24"><span :if={@attr.required}>*</span>[list]-<%= @attr.name %></span>
+    <input type="text" name={@attr.name} value={@attr[:value] && inspect(@attr[:value])} placeholder={@attr.doc} class="ld-input w-44"/>
   </label>
 </div>

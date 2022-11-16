@@ -1,9 +1,11 @@
-<div class="divider"> Slots</div>
-<div class="m-4">
-  <div class="space-y-4 mt-10">
+<.collapse label="Slots" show={true} >
+  <div class="space-y-4 py-2">
     <div :for={{name, slot}<-@slots} class="form-control">
-      <div><span :if={slot.required}>*</span><%= name %></div>
+      <div class="h-8 align-middle ml-3 text-lg font-bold">
+        <span :if={slot.required}>*</span>
+        <%= name %>
+      </div>
       <LiveEditorWeb.Code.heex code={slot[:value]} id={"#{@id}-#{name}"} />
     </div>
   </div>
-</div>
+</.collapse>

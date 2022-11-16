@@ -1,10 +1,8 @@
 <div class="form-control">
-  <label class="input-group">
-    <span>
-      <%= if @attr.required, do: "*" %><%= @attr.name %>
-    </span>
+  <label class="flex items-center space-x-2">
+    <span class="w-24"><span :if={@attr.required}>*</span><%= @attr.name %></span>
     <% selected = @attr[:value] || @attr[:opts][:default] %>
-    <select name={@attr.name} class="select select-bordered">
+    <select name={@attr.name} class="ld-input w-44">
       <option :for={value<-@attr[:opts][:values]} selected={selected == value}><%= value %></option>
     </select>
   </label>

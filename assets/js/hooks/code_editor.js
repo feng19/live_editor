@@ -1,7 +1,6 @@
 import {CodeJar} from 'codejar';
 import {withLineNumbers} from 'codejar/linenumbers';
 
-
 const CodeEditor = {
   jat: null,
   pos: null,

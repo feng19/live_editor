@@ -1,18 +1,20 @@
-<div class="divider"> Attrs </div>
-<form class="m-4" phx-change="attr_changed">
-  <div class="space-y-4 mt-10">
-    <%= for {_name, attr}<-@attrs do %>
-    <LiveEditorWeb.Attrs.attr attr={attr} />
-    <% end %>
-  </div>
-</form>
+<.collapse label="Attrs" show={true} >
+  <form class="flex flex-col space-y-4 py-4 px-2 w-full" phx-change="attr_changed">
+    <LiveEditorWeb.Attrs.attr :for={{_name, attr}<-@attrs} attr={attr} />
+  </form>
 
-<div class="form-control m-4" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
-  <label class="input-group flex">
-    <input id="attr-add-input" type="text" class="input input-bordered w-auto flex-1"/>
-    <button type="button" class="btn btn-square" id="attr-add-button" phx-hook="ClickWithInputValue"
-            data-event="add_global_attr" data-target="attr-add-input" >
-      <Heroicons.plus_small />
-    </button>
-  </label>
-</div>
+  <div class="px-2" :if={Enum.any?(@attrs, &match?({_, %{type: :global}}, &1))}>
+    <div class="flex space-x-2 text-sm">
+      <span class="w-28">key</span>
+      <span class="w-28">value</span>
+    </div>
+    <div class="flex space-x-2">
+      <input name="k" type="text" class="ld-input w-28" @change="$refs.add_attr_btn.setAttribute('phx-value-k', $el.value)"/>
+      <input name="v" type="text" class="ld-input w-28" @change="$refs.add_attr_btn.setAttribute('phx-value-v', $el.value)"/>
+      <button type="button" phx-click="add_global_attr" x-ref="add_attr_btn">
+        <Heroicons.plus_small mini class="w-8"/>
+      </button>
+    </div>
+  </div>
+</.collapse>
+

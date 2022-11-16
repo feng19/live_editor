@@ -6,7 +6,7 @@
 
 #ld-top-bar {
   color: #ebebeb;
-  @apply ld-bar-bg h-10 w-full pr-64 fixed top-0 z-30 border-b border-solid border-black
+  @apply ld-bar-bg h-10 w-full pr-72 fixed top-0 z-20 border-b border-solid border-black
 }
 
 #ld-top-bar .ld-btn {
@@ -16,12 +16,12 @@
 #ld-bottom-bar {
   background: #ebebeb;
   color: #4d4d4d;
-  @apply h-8 w-full pl-10 pr-64 fixed bottom-0 border-t border-solid border-black
+  @apply h-8 w-full pl-10 pr-72 fixed bottom-0 border-t border-solid border-black
 }
 
 #ld-right-bar {
   color: #ebebeb;
-  @apply ld-bar-bg h-full w-64 fixed top-0 right-0 z-40 border-l border-solid border-black overflow-y-auto overscroll-y-auto
+  @apply ld-bar-bg h-full w-72 fixed top-0 right-0 z-30 border-l border-solid border-black overflow-y-auto overscroll-y-auto
 }
 
 #ld-left-bar {
@@ -30,15 +30,52 @@
 }
 
 #ld-left-bar .ld-btn {
-  @apply w-10 h-10 mb-2 border-b border-solid border-gray-600 tooltip tooltip-right
+  @apply w-10 h-10 p-1 border-b border-solid border-gray-600 tooltip tooltip-right
 }
 
 .ld-left-panel {
-  @apply ld-bar-bg fixed top-10 left-10 w-64 h-full z-50 border-r border-solid border-black overflow-y-auto overscroll-y-auto
+  color: #ebebeb;
+  @apply ld-bar-bg fixed top-10 left-10 w-72 h-full z-50 border-r border-solid border-black overflow-y-auto overscroll-y-auto
+}
+
+#ld-left-mask {
+  width: calc(100% - 2.5rem);
+  @apply fixed h-full left-10 z-40 bg-gray-200 bg-opacity-10
 }
 
 #ld-workspace {
-  width: calc(100% - 2.5rem - 16rem);
+  width: calc(100% - 2.5rem - 18rem);
   height: calc(100% - 2.5rem - 2rem);
   @apply bg-gray-100 top-10 left-10 absolute overflow-auto overscroll-auto
+}
+
+.ld-collapse {
+  color: #d9d9d9;
+  @apply flex flex-col
+}
+
+.ld-collapse-title {
+  background: #2b2b2b;
+  border-bottom: 1px solid #212121;
+  @apply flex items-center cursor-default select-none h-8
+}
+
+.ld-collapse-content {
+  background: #404040;
+}
+
+.ld-input {
+  background: #2b2b2b;
+  @apply p-0
+}
+
+.code-editor {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+  font-family: 'Source Code Pro', monospace;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 20px;
+  padding: 10px;
+  tab-size: 4;
 }

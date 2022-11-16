@@ -1,13 +1,22 @@
-<div class="divider"> <%= if @attr.required, do: "*" %><%= @attr.name %> </div>
-<div>value: <%= @attr[:value] && inspect(@attr[:value]) %></div>
-<div :if={@attr.doc}><%= @attr.doc %></div>
-<% list = List.wrap(@attr[:value]) %>
-<div class="form-control" :for={{k,v}<-list}>
-  <label class="input-group">
-    <span><%= k %></span>
-    <input type="text" name={"#{@attr.name}[#{k}]"} value={v} class="input input-bordered w-1/2"/>
-    <button type="button" class="btn btn-square" phx-click="remove_global_attr" phx-value-global-name={@attr.name} value={k}>
-      <Heroicons.minus_small />
+<div class="">
+  <div class="divider">
+    <span :if={@attr.required}>*</span>
+    <%= @attr.name %>
+  </div>
+  <div class="text-lg select-all" style="background: #2b2b2b;">
+    <%= @attr[:value] && inspect(@attr[:value]) %>
+  </div>
+  <div :if={@attr.doc} class="text-sm my-2">
+    <%= @attr.doc %>
+  </div>
+
+  <% list = List.wrap(@attr[:value]) %>
+
+  <div class="flex items-center space-x-2" :for={{k,v}<-list}>
+    <label class="w-16"><%= k %></label>
+    <input type="text" class="ld-input flex-initial w-40" name={"#{@attr.name}[#{k}]"} value={v} />
+    <button type="button" class="w-8" phx-click="remove_global_attr" phx-value-global-name={@attr.name} value={k}>
+      <Heroicons.archive_box_x_mark class="w-6" />
     </button>
-  </label>
+  </div>
 </div>

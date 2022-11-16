@@ -1,6 +1,6 @@
 defmodule LiveEditor.UI.Heroicons do
   @moduledoc false
-  alias LiveEditor.ComponentRender
+  alias LiveEditor.{ComponentRender, CodeRender}
 
   def components do
     Heroicons.__components__()
@@ -35,6 +35,7 @@ defmodule LiveEditor.UI.Heroicons do
       Map.merge(component, %{
         attrs: attrs,
         render: &__MODULE__.render/1,
+        code_render: &__MODULE__.code_render/1,
         menu_button: menu_button,
         preview_class: "inline-block",
         example_preview: nil
@@ -61,5 +62,10 @@ defmodule LiveEditor.UI.Heroicons do
   def render(component) do
     attrs = handle_attrs(component.attrs)
     ComponentRender.render(%{component | attrs: attrs})
+  end
+
+  def code_render(component) do
+    attrs = handle_attrs(component.attrs)
+    CodeRender.component_string(%{component | attrs: attrs})
   end
 end

@@ -19,31 +19,29 @@ defmodule LiveEditorWeb.EditorLive do
       %{label: "Hero Icons", name: "hero_icons", components: UI.Heroicons.components()}
     ]
 
-    {:ok,
-     assign(socket,
-       left_bar_settings: left_bar_settings,
-       nav_items: [],
-       groups: groups,
-       left_panel: nil,
-       breadcrumbs: ["home", "1", "2"],
-       code: nil,
-       select_id: nil,
-       select_component: nil,
-       previews: [],
-       meta_previews: []
-     )}
+    socket =
+      assign(socket,
+        file_path: nil,
+        left_bar_settings: left_bar_settings,
+        nav_items: [],
+        groups: groups,
+        left_panel: nil,
+        breadcrumbs: ["home", "1", "2"],
+        code: nil,
+        all_code: nil,
+        select_id: nil,
+        select_component: nil,
+        previews: [],
+        meta_previews: []
+      )
+      # todo for test
+      |> test_helper()
+
+    {:ok, socket}
   end
 
   def handle_event("add_component", %{"group" => group, "name" => name} = params, socket) do
-    assigns = socket.assigns
-
-    component =
-      assigns.groups
-      |> Enum.find(&match?(%{name: ^group}, &1))
-      |> Map.get(:components)
-      |> Enum.find(&match?(%{name: ^name}, &1))
-      |> UI.Helper.apply_example_preview()
-
+    component = find_component_from_groups(socket.assigns.groups, group, name)
     # todo set id
     id = "ld-#{System.os_time(:millisecond)}"
     index = Map.get(params, "index", -1)
@@ -97,14 +95,14 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, socket}
   end
 
-  def handle_event("add_global_attr", %{"value" => ""}, socket), do: {:noreply, socket}
+  def handle_event("add_global_attr", %{"k" => ""}, socket), do: {:noreply, socket}
 
-  def handle_event("add_global_attr", %{"value" => key}, socket) do
+  def handle_event("add_global_attr", %{"k" => key, "v" => v}, socket) do
     component = socket.assigns.select_component
     attrs = component.attrs
     {target, attr} = Enum.find(attrs, &match?({_, %{type: :global}}, &1))
     key = String.to_atom(key)
-    value = attr[:value] |> List.wrap() |> Keyword.put(key, "") |> Enum.sort_by(&elem(&1, 0))
+    value = attr[:value] |> List.wrap() |> Keyword.put(key, v) |> Enum.sort_by(&elem(&1, 0))
     attr = Map.put(attr, :value, value)
 
     socket =
@@ -149,14 +147,13 @@ defmodule LiveEditorWeb.EditorLive do
         socket
       ) do
     assigns = socket.assigns
+    previews = update_sort(assigns.previews, old_index, new_index)
     meta_previews = update_sort(assigns.meta_previews, old_index, new_index)
 
     socket =
-      assign(socket,
-        previews: update_sort(assigns.previews, old_index, new_index),
-        meta_previews: meta_previews,
-        nav_items: calc_nav_items(meta_previews)
-      )
+      socket
+      |> assign(previews: previews)
+      |> meta_changed(meta_previews)
 
     {:noreply, socket}
   end
@@ -172,11 +169,8 @@ defmodule LiveEditorWeb.EditorLive do
       else
         socket
       end
-      |> assign(
-        previews: previews,
-        meta_previews: meta_previews,
-        nav_items: calc_nav_items(meta_previews)
-      )
+      |> assign(previews: previews)
+      |> meta_changed(meta_previews)
 
     {:noreply, socket}
   end
@@ -185,8 +179,12 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, show_code(socket)}
   end
 
+  def handle_event("show_all_code", _params, socket) do
+    {:noreply, show_all_code(socket)}
+  end
+
   def handle_event("hide_code", _params, socket) do
-    {:noreply, assign(socket, code: nil)}
+    {:noreply, assign(socket, code: nil, all_code: nil)}
   end
 
   def handle_event("code_changed", %{"id" => id, "code" => code}, socket) do
@@ -226,6 +224,28 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, socket}
   end
 
+  def handle_event("read_file", %{"file" => file_path}, socket) do
+    components = File.read!(file_path) |> LiveEditor.Parser.parse()
+    now = System.os_time(:millisecond)
+    meta_previews = components_to_meta(components, now)
+    previews = meta_to_previews(meta_previews)
+
+    socket =
+      socket
+      |> assign(previews: previews)
+      |> meta_changed(meta_previews)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("save_file", _, socket) do
+    %{file_path: file_path, meta_previews: meta_previews} = socket.assigns
+    content = LiveEditor.Parser.to_string(meta_previews)
+    File.write!(file_path, content)
+    socket = put_flash(socket, :info, "Save finished.")
+    {:noreply, socket}
+  end
+
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
@@ -233,6 +253,14 @@ defmodule LiveEditorWeb.EditorLive do
   defp update_sort(list, old_index, new_index) do
     {item, list} = List.pop_at(list, old_index)
     List.insert_at(list, new_index, item)
+  end
+
+  defp find_component_from_groups(groups, group, name) do
+    groups
+    |> Enum.find(&match?(%{name: ^group}, &1))
+    |> Map.get(:components)
+    |> Enum.find(&match?(%{name: ^name}, &1))
+    |> UI.Helper.apply_example_preview()
   end
 
   defp add_component(component, id, index, socket) do
@@ -250,10 +278,9 @@ defmodule LiveEditorWeb.EditorLive do
           code: nil,
           select_id: id,
           select_component: component,
-          previews: previews,
-          meta_previews: meta_previews,
-          nav_items: calc_nav_items(meta_previews)
+          previews: previews
         )
+        |> meta_changed(meta_previews)
     end
   end
 
@@ -270,14 +297,34 @@ defmodule LiveEditorWeb.EditorLive do
         previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
 
         socket
-        |> assign(
-          select_component: component,
-          previews: previews,
-          meta_previews: meta_previews,
-          nav_items: calc_nav_items(meta_previews)
-        )
+        |> assign(select_component: component, previews: previews)
+        |> meta_changed(meta_previews)
         |> maybe_show_code()
     end
+  end
+
+  defp components_to_meta(components, id_start) do
+    Enum.map_reduce(components, id_start, fn component, id ->
+      {children, id} = component |> Map.get(:children, []) |> components_to_meta(id + 1)
+      component = Map.put(component, :children, children)
+      {{"ld-#{id}", component}, id + 1}
+    end)
+  end
+
+  defp meta_changed(socket, meta_previews) do
+    assign(
+      socket,
+      meta_previews: meta_previews,
+      nav_items: calc_nav_items(meta_previews)
+    )
+  end
+
+  defp meta_to_previews(meta_previews) do
+    Enum.map(meta_previews, fn {id, component} ->
+      rendered = render_component!(component)
+      preview = %{rendered: rendered, class: component[:preview_class]}
+      {id, preview}
+    end)
   end
 
   defp calc_nav_items(meta_previews) do
@@ -287,13 +334,17 @@ defmodule LiveEditorWeb.EditorLive do
     end)
   end
 
-  defp render_component(component) do
+  defp render_component!(component) do
     with render when not is_nil(render) <- component[:render],
          true <- is_function(render, 1) do
       render.(component)
     else
       _ -> ComponentRender.render(component)
     end
+  end
+
+  defp render_component(component) do
+    render_component!(component)
   rescue
     reason ->
       error_msg = Exception.format(:error, reason, __STACKTRACE__)
@@ -310,13 +361,31 @@ defmodule LiveEditorWeb.EditorLive do
     if socket.assigns.code do
       show_code(socket)
     else
-      socket
+      if socket.assigns.all_code do
+        show_all_code(socket)
+      else
+        socket
+      end
     end
   end
 
   defp show_code(socket) do
-    code = CodeRender.component_string(socket.assigns.select_component)
+    component = socket.assigns.select_component
+
+    code =
+      with render when not is_nil(render) <- component[:code_render],
+           true <- is_function(render, 1) do
+        render.(component)
+      else
+        _ -> CodeRender.component_string(component)
+      end
+
     assign(socket, code: code)
+  end
+
+  defp show_all_code(socket) do
+    code = LiveEditor.Parser.to_string(socket.assigns.meta_previews)
+    assign(socket, all_code: 1, code: code)
   end
 
   defp slot_changed(socket, slot_name, content) do
@@ -326,5 +395,15 @@ defmodule LiveEditorWeb.EditorLive do
 
     %{component | slots: List.keyreplace(slots, slot_name, 0, {slot_name, slot})}
     |> component_changed(socket)
+  end
+
+  defp test_helper(socket) do
+    groups = socket.assigns.groups
+    div = find_component_from_groups(groups, "base", "div")
+    socket = add_component(div, "ld-first-div", -1, socket)
+    modal = find_component_from_groups(groups, "core", "modal")
+    socket = add_component(modal, "ld-first-modal", -1, socket)
+    icon = find_component_from_groups(groups, "hero_icons", "academic_cap")
+    add_component(icon, "ld-first-modal", -1, socket)
   end
 end

@@ -1,10 +1,19 @@
 <div id="ld-right-bar">
-  <div :if={@select_id}>
-    <!-- todo tabs -->
-
+  <%= if @select_id do %>
+    <div class="px-2 space-x-2 h-10 flex items-center">
+      <div class="w-40 text-lg select-all">
+        <%= @select_id %>
+      </div>
+      <button class="ld-btn" :if={is_nil(@code)} phx-click="show_code" value={@select_id}>
+        <Heroicons.code_bracket class="w-6" />
+      </button>
+      <button class="ld-btn" phx-click="remove_component" value={@select_id}>
+        <Heroicons.archive_box_x_mark class="w-6" />
+      </button>
+    </div>
     <!-- attrs -->
     <Panels.editor_attrs :if={@select_component.attrs !=[]} id={@select_id} attrs={@select_component.attrs}/>
     <!-- slots -->
     <Panels.editor_slots :if={@select_component.slots !=[]} id={@select_id} slots={@select_component.slots}/>
-  </div>
+  <% end %>
 </div>
