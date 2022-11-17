@@ -9,8 +9,12 @@
   @apply ld-bar-bg h-10 w-full pr-72 fixed top-0 z-20 border-b border-solid border-black
 }
 
+.btn {
+  @apply inline-flex items-center px-2
+}
+
 #ld-top-bar .ld-btn {
-  @apply btn btn-ghost h-10 min-h-full
+  @apply btn h-10 min-h-full
 }
 
 #ld-bottom-bar {
@@ -30,7 +34,7 @@
 }
 
 #ld-left-bar .ld-btn {
-  @apply w-10 h-10 p-1 border-b border-solid border-gray-600 tooltip tooltip-right
+  @apply w-10 h-10 p-1 border-b border-solid border-gray-600
 }
 
 .ld-left-panel {

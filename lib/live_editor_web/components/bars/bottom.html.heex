@@ -1,10 +1,9 @@
 <div id="ld-bottom-bar">
-  <div class="px-2 text-sm align-middle breadcrumbs">
-    <ul>
-      <li>Body</li>
-      <li :for={b<-@breadcrumbs}>
-        <a><%= b %></a>
-      </li>
-    </ul>
-  </div>
+  <ul class="h-full px-2 flex content-center items-center gap-1 text-sm align-middle">
+    <li>Body</li>
+    <%= for b<-@breadcrumbs do %>
+    <li> > </li>
+    <li><a><%= b %></a></li>
+    <% end %>
+  </ul>
 </div>

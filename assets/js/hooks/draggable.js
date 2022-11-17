@@ -54,7 +54,9 @@ const Draggable = {
     }
   },
   destroyed() {
-    this.sortable.destroy();
+    if (this.sortable) {
+      this.sortable.destroy();
+    }
   },
 };
 

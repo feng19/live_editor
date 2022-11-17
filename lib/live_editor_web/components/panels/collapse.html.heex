@@ -4,7 +4,7 @@
     <%= @label %>
   </div>
 
-  <div class={"ld-collapse-content #{@content_class}"} x-show="open">
+  <div class={"ld-collapse-content #{@content_class}"} x-transition x-show="open">
     <%= render_slot(@inner_block) %>
   </div>
 </div>

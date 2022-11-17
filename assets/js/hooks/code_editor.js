@@ -46,7 +46,9 @@ const CodeEditor = {
     }
   },
   destroyed() {
-    this.jar.destroy();
+    if (this.jar) {
+      this.jar.destroy();
+    }
   }
 };
 
