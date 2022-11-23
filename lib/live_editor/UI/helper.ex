@@ -25,6 +25,7 @@ defmodule LiveEditor.UI.Helper do
       | attrs: do_apply_example_preview(example_preview[:attrs], attrs),
         slots: do_apply_example_preview(example_preview[:slots], slots)
     }
+    |> Map.put(:children, Map.get(example_preview, :children, []))
     |> Map.put(:assigns, Map.get(example_preview, :assigns, %{}))
     |> Map.put(:let, Map.get(example_preview, :let))
     |> Map.drop([:menu_button, :example_preview])

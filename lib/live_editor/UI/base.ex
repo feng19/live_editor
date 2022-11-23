@@ -77,25 +77,25 @@ defmodule LiveEditor.UI.Base do
   defp example_preview(:div) do
     %{
       attrs: [rest: [class: "w-full h-15"]],
-      slots: [inner_block: "add something here"]
+      children: [%{type: :text, value: "add something here"}]
     }
   end
 
   defp example_preview(tag) when tag in [:p, :span] do
     %{
-      slots: [inner_block: "add something here"]
+      children: [%{type: :text, value: "add something here"}]
     }
   end
 
   defp example_preview(tag) when tag in @group_list do
     %{
-      slots: [inner_block: "add something here"]
+      children: [%{type: :text, value: "add something here"}]
     }
   end
 
   defp example_preview(tag) when tag in [:h1, :h2, :h3, :h4, :h5, :h6] do
     %{
-      slots: [inner_block: to_string(tag)]
+      children: [%{type: :text, value: to_string(tag)}]
     }
   end
 

@@ -1,13 +1,14 @@
-<div x-data="{ open_panel: false }">
+<div id="ld-left" x-data="{ open_panel: false }" x-cloak>
   <div id="ld-left-bar" class="flex flex-col w-10">
     <div :for={s<-@left_bar_settings} class="ld-btn" id={"ld-left-#{s.name}"}
          @click={"open_panel = open_panel == '#{s.name}' ? false : '#{s.name}'"} data-tip={s.label}>
       <%= Phoenix.LiveView.HTMLEngine.component(s.icon, [], __ENV__) %>
     </div>
   </div>
-
+  <!-- Panels start -->
   <Panels.add groups={@groups} />
   <Panels.navigator nav_items={@nav_items} />
-  <div class="fixed w-10 h-10 z-40 bg-gray-200 bg-opacity-10" x-show="open_panel" @click="open_panel = false"></div>
-  <div id="ld-left-mask" x-show="open_panel" @click="open_panel = false"></div>
+  <!-- Panels end -->
+  <div class="fixed w-10 h-10 z-40 bg-gray-200 bg-opacity-10" x-cloak x-transition x-show="open_panel" @click="open_panel = false"></div>
+  <div id="ld-left-mask" x-cloak x-transition x-show="open_panel" @click="open_panel = false"></div>
 </div>

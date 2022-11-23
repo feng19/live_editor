@@ -91,7 +91,6 @@ defmodule LiveEditorWeb.CoreComponents do
                     :for={confirm <- @confirm}
                     id={"#{@id}-confirm"}
                     phx-click={@on_confirm}
-                    phx-disable-with
                     class="py-2 px-3"
                   >
                     <%= render_slot(confirm) %>

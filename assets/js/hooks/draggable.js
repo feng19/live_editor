@@ -2,6 +2,7 @@ import Sortable from 'sortablejs';
 
 const Draggable = {
   sortable: null,
+  open_panel: false,
   mounted() {
     const hook = this;
     let id = this.el.id;
@@ -37,6 +38,7 @@ const Draggable = {
     } else {
       let id = this.el.id;
       const selector = '#' + id;
+      let left = document.getElementById('ld-left');
       // console.log("Add Sortable for", selector);
       new Sortable(this.el, {
         animation: 150,
@@ -50,6 +52,13 @@ const Draggable = {
         draggable: '.draggable',
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
+        onStart: function (evt) {
+          this.open_panel = left._x_dataStack[0].open_panel;
+          left._x_dataStack[0].open_panel = false;
+        },
+        onEnd: function (evt) {
+          left._x_dataStack[0].open_panel = this.open_panel;
+        },
       });
     }
   },

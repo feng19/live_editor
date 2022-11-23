@@ -1,4 +1,4 @@
-<div id="ld-left-panel-add" class="ld-left-panel" x-cloak x-transition x-show="open_panel == 'add'">
+<div id="ld-left-panel-add" class="ld-left-panel" x-show="open_panel == 'add'" x-cloak x-transition>
   <div class="m-4 text-2xl">Add</div>
   <.collapse :for={group<-@groups} label={group.label} >
     <div class="grid gap-4 grid-cols-3 p-4" phx-hook="Draggable" id={"g-list-#{group.name}"}>

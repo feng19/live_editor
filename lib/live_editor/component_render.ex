@@ -10,11 +10,10 @@ defmodule LiveEditor.ComponentRender do
   end
 
   def component_code_string(component) do
-    component |> component_code() |> elem(1)
+    component |> component_code() |> Map.get(:string)
   end
 
   def component_code(component) do
-    slots = component.slots |> Stream.map(&elem(&1, 1)) |> Enum.filter(& &1[:value])
     attrs = component.attrs |> Stream.map(&elem(&1, 1)) |> Enum.filter(& &1[:value])
 
     attrs =
@@ -42,9 +41,11 @@ defmodule LiveEditor.ComponentRender do
         nil
       end
 
+    children = Map.get(component, :children, [])
+
     {line, string} =
-      if not Enum.empty?(slots) do
-        slots = Enum.map(slots, & &1.value) |> List.flatten() |> Enum.join("\n")
+      if not Enum.empty?(children) do
+        blocks = children_to_blocks(children)
 
         case component.module do
           :tag ->
@@ -54,7 +55,7 @@ defmodule LiveEditor.ComponentRender do
               __ENV__.line + 2,
               """
               <#{tag} #{for} #{let} {@attrs}>
-                #{slots}
+                #{blocks}
               </#{tag}>
               """
             }
@@ -67,7 +68,7 @@ defmodule LiveEditor.ComponentRender do
               __ENV__.line + 2,
               """
               <#{module}.#{fun_name} #{for} #{let} {@attrs}>
-                #{slots}
+                #{blocks}
               </#{module}.#{fun_name}>
               """
             }
@@ -89,6 +90,19 @@ defmodule LiveEditor.ComponentRender do
       end
 
     %{line: line, string: string, assigns: assigns}
+  end
+
+  defp children_to_blocks(children) do
+    children
+    |> Stream.map(&elem(&1, 1))
+    |> Enum.map(fn
+      %{type: :text, value: text} ->
+        text
+
+      component when is_map(component) ->
+        component_code_string(component)
+    end)
+    |> Enum.join("\n")
   end
 
   def render(component, raw? \\ true, env_or_opts \\ env()) do

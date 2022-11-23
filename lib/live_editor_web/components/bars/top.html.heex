@@ -1,13 +1,27 @@
 <div id="ld-top-bar">
   <nav class="align-middle flex justify-between">
+    <!-- left -->
     <div id="ld-top-left" class="w-max">
       <button class="ld-btn normal-case text-xl">Live Editor</button>
     </div>
-    <div id="ld-top-middle" class="flx-1 w-96 border-r border-l border-solid border-gray-600 flex justify-center">
 
+    <!-- middle -->
+    <div id="ld-top-middle" class="flx-1 w-96 border-r border-l border-solid border-gray-600 flex justify-center">
+      <%= @file_path %>
     </div>
+
+    <!-- right -->
     <div id="ld-top-right" class="w-max h-10 flex">
-      <button class="ld-btn" :if={@select_id && is_nil(@all_code)} phx-click="show_all_code" value={@select_id}>
+      <button class="ld-btn" :if={is_nil(@file_path)} phx-click={show_modal("ld-new-file-selector")}>
+        <Heroicons.document_plus solid class="w-6" />
+      </button>
+      <button class="ld-btn" :if={is_nil(@file_path)} phx-click={show_modal("ld-open-file-selector")}>
+        <Heroicons.folder_open solid class="w-6" />
+      </button>
+      <button class="ld-btn" :if={@file_path} phx-click="save_file">
+        <Heroicons.document_arrow_down solid class="w-6" />
+      </button>
+      <button class="ld-btn" :if={is_nil(@all_code)} phx-click="show_all_code">
         <Heroicons.code_bracket solid class="w-6" />
       </button>
       <button class="ld-btn" :if={@code} phx-click="hide_code" value={@select_id}>

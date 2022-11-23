@@ -3,9 +3,9 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
+import Alpine from "alpinejs"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks"
-import Alpine from "alpinejs"
 
 window.Alpine = Alpine
 Alpine.start()
@@ -27,6 +27,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", info => topbar.delayedShow(200))
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
+
+window.addEventListener("phx:hide_modal", e => document.getElementById(e.detail.id).style.display = "none")
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()

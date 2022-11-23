@@ -25,20 +25,20 @@ defmodule LiveEditor.UI.Core do
   defp example_preview(:modal) do
     %{
       attrs: [id: "modal", show: true],
-      slots: [inner_block: "Are you sure?"]
+      children: [%{type: :text, value: "Are you sure?"}]
     }
   end
 
   defp example_preview(:flash) do
     %{
       attrs: [kind: :info],
-      slots: [inner_block: "Welcome Back!"]
+      children: [%{type: :text, value: "Welcome Back!"}]
     }
   end
 
   defp example_preview(:button) do
     %{
-      slots: [inner_block: "Send!"]
+      children: [%{type: :text, value: "Send!"}]
     }
   end
 
@@ -50,35 +50,44 @@ defmodule LiveEditor.UI.Core do
 
   defp example_preview(:label) do
     %{
-      slots: [
-        inner_block: """
-        <.error>please input new value for this input</.error>
-        <input name="username" value="Kevin" />
-        """
+      children: [
+        %{
+          type: :text,
+          value: """
+          <.error>please input new value for this input</.error>
+          <input name="username" value="Kevin" />
+          """
+        }
       ]
     }
   end
 
   defp example_preview(:error) do
     %{
-      slots: [inner_block: "error message"]
+      children: [%{type: :text, value: "error message"}]
     }
   end
 
   defp example_preview(:header) do
     %{
-      slots: [inner_block: "<div>I'm header</div>"]
+      children: [%{type: :text, value: "<div>I'm header</div>"}]
     }
   end
 
   defp example_preview(:table) do
     %{
       attrs: [id: "ld-table", rows: [%{id: 1, username: "kevin"}, %{id: 2, username: "bob"}]],
-      slots: [
-        col: """
-        <:col :let={user} label="id"><%= user.id %></:col>
-        <:col :let={user} label="username"><%= user.username %></:col>
-        """
+      children: [
+        %{
+          type: :text,
+          slot: :item,
+          value: ~S|<:col :let={user} label="id"><%= user.id %></:col>|
+        },
+        %{
+          type: :text,
+          slot: :item,
+          value: ~S|<:col :let={user} label="username"><%= user.username %></:col>|
+        }
       ]
     }
   end
@@ -87,11 +96,17 @@ defmodule LiveEditor.UI.Core do
     %{
       assigns: %{post: %{title: "1-title", views: "1-views"}},
       attrs: [],
-      slots: [
-        item: """
-        <:item title="Title"><%= @post.title %></:item>
-        <:item title="Views"><%= @post.views %></:item>
-        """
+      children: [
+        %{
+          type: :text,
+          slot: :item,
+          value: ~S|<:item title="Title"><%= @post.title %></:item>|
+        },
+        %{
+          type: :text,
+          slot: :item,
+          value: ~S|<:item title="Views"><%= @post.views %></:item>|
+        }
       ]
     }
   end
@@ -99,7 +114,7 @@ defmodule LiveEditor.UI.Core do
   defp example_preview(:back) do
     %{
       attrs: [navigate: "/"],
-      slots: [inner_block: "Back to home"]
+      children: [%{type: :text, value: "Back to home"}]
     }
   end
 

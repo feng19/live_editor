@@ -41,10 +41,8 @@ defmodule LiveEditorWeb.EditorLive do
 
   def handle_event("add_component", %{"group" => group, "name" => name} = params, socket) do
     component = find_component_from_groups(socket.assigns.groups, group, name)
-    # todo set id
-    id = "ld-#{System.os_time(:millisecond)}"
     index = Map.get(params, "index", -1)
-    socket = add_component(component, id, index, socket)
+    socket = add_component(component, index, socket)
     {:noreply, socket}
   end
 
@@ -131,7 +129,7 @@ defmodule LiveEditorWeb.EditorLive do
 
     socket =
       if assigns.select_id != id do
-        {_, component} = List.keyfind(assigns.meta_previews, id, 0)
+        component = find_component_from_meta(assigns.meta_previews, id)
         breadcrumbs = calc_breadcrumbs(assigns.nav_items, id)
         assign(socket, select_id: id, select_component: component, breadcrumbs: breadcrumbs)
       else
@@ -190,8 +188,12 @@ defmodule LiveEditorWeb.EditorLive do
   def handle_event("code_changed", %{"id" => id, "code" => code}, socket) do
     socket =
       case id do
-        "code" -> assign(socket, code: code)
-        "slot-" <> slot_name -> slot_changed(socket, slot_name, code)
+        "code" ->
+          assign(socket, code: code)
+
+        "slot-" <> name ->
+          slot_name = String.split(name, "-") |> List.last()
+          slot_changed(socket, slot_name, code)
       end
 
     {:noreply, socket}
@@ -209,29 +211,22 @@ defmodule LiveEditorWeb.EditorLive do
     {:reply, %{code: code}, socket}
   end
 
-  def handle_event("read_file", %{"file" => file_path}, socket) do
-    components = File.read!(file_path) |> LiveEditor.Parser.parse()
-    now = System.os_time(:millisecond)
-    meta_previews = components_to_meta(components, now)
-    previews = meta_to_previews(meta_previews)
-
-    socket =
-      socket
-      |> assign(previews: previews)
-      |> meta_changed(meta_previews)
-
-    {:noreply, socket}
-  end
-
   def handle_event("save_file", _, socket) do
-    %{file_path: file_path, meta_previews: meta_previews} = socket.assigns
-    content = LiveEditor.Parser.to_string(meta_previews)
-    File.write!(file_path, content)
-    socket = put_flash(socket, :info, "Save finished.")
+    socket = save_file(socket)
     {:noreply, socket}
   end
 
   def handle_event(_event, _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info({"new_file", file_path}, socket) do
+    socket = assign(socket, file_path: file_path)
+    {:noreply, socket}
+  end
+
+  def handle_info({"open_file", file_path}, socket) do
+    socket = open_file(socket, file_path)
     {:noreply, socket}
   end
 
@@ -245,20 +240,53 @@ defmodule LiveEditorWeb.EditorLive do
     List.insert_at(list, new_index, item)
   end
 
+  defp find_component_from_meta(meta_previews, id) do
+    Enum.find_value(meta_previews, fn
+      {^id, component} ->
+        component
+
+      {_, component} ->
+        component
+        |> Map.get(:children, [])
+        |> find_component_from_meta(id)
+    end)
+  end
+
   defp find_component_from_groups(groups, group, name) do
     groups
     |> Enum.find(&match?(%{name: ^group}, &1))
     |> Map.get(:components)
     |> Enum.find(&match?(%{name: ^name}, &1))
     |> UI.Helper.apply_example_preview()
+    |> Map.put_new(:children, [])
   end
 
-  defp add_component(component, id, index, socket) do
+  defp append_id_for_children(component, index) do
+    {children, index} =
+      Enum.map_reduce(component.children, index, fn child, acc ->
+        id = "ld-#{acc}"
+
+        if child[:children] do
+          {child, acc} = append_id_for_children(child, acc + 1)
+          {{id, child}, acc + 1}
+        else
+          {{id, child}, acc + 1}
+        end
+      end)
+
+    {%{component | children: children}, index}
+  end
+
+  defp add_component(component, index, socket) do
+    now = System.os_time(:millisecond)
+    component = append_id_for_children(component, now + 1) |> elem(0)
+
     case render_component(component) do
       {:error, error_msg} ->
         put_flash(socket, :error, error_msg)
 
       rendered ->
+        id = "ld-#{now}"
         %{previews: previews, meta_previews: meta_previews} = socket.assigns
         meta_previews = List.insert_at(meta_previews, index, {id, component})
         preview = %{rendered: rendered, class: component[:preview_class]}
@@ -324,7 +352,15 @@ defmodule LiveEditorWeb.EditorLive do
   defp calc_nav_items(meta_previews) do
     Enum.map(meta_previews, fn {id, component} ->
       children = component |> Map.get(:children, []) |> calc_nav_items()
-      %{id: id, label: component.name, children: children}
+
+      label =
+        if component[:type] == :text do
+          "text"
+        else
+          component.name
+        end
+
+      %{id: id, label: label, children: children}
     end)
   end
 
@@ -368,6 +404,44 @@ defmodule LiveEditorWeb.EditorLive do
       {:error, error_msg}
   end
 
+  defp open_file(socket, file_path) do
+    components = File.read!(file_path) |> LiveEditor.Parser.parse()
+    now = System.os_time(:millisecond)
+    meta_previews = components_to_meta(components, now) |> elem(0)
+    previews = meta_to_previews(meta_previews)
+
+    socket
+    |> assign(previews: previews, file_path: file_path)
+    |> meta_changed(meta_previews)
+  rescue
+    reason ->
+      error_msg = Exception.format(:error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      put_flash(socket, :error, "open file failed, go back to console and see details.")
+  catch
+    error, reason ->
+      error_msg = Exception.format(error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      put_flash(socket, :error, "open file failed, go back to console and see details.")
+  end
+
+  defp save_file(socket) do
+    %{file_path: file_path, meta_previews: meta_previews} = socket.assigns
+    content = LiveEditor.Parser.to_string(meta_previews)
+    File.write!(file_path, content)
+    put_flash(socket, :info, "Save finished.")
+  rescue
+    reason ->
+      error_msg = Exception.format(:error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      put_flash(socket, :error, "save file failed, go back to console and see details.")
+  catch
+    error, reason ->
+      error_msg = Exception.format(error, reason, __STACKTRACE__)
+      Logger.error(error_msg)
+      put_flash(socket, :error, "save file failed, go back to console and see details.")
+  end
+
   defp maybe_show_code(socket) do
     if socket.assigns.code do
       show_code(socket)
@@ -409,12 +483,13 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   defp test_helper(socket) do
-    groups = socket.assigns.groups
-    div = find_component_from_groups(groups, "base", "div")
-    socket = add_component(div, "ld-first-div", -1, socket)
-    modal = find_component_from_groups(groups, "core", "modal")
-    socket = add_component(modal, "ld-first-modal", -1, socket)
-    icon = find_component_from_groups(groups, "hero_icons", "academic_cap")
-    add_component(icon, "ld-first-icon", -1, socket)
+    #    groups = socket.assigns.groups
+    #    div = find_component_from_groups(groups, "base", "div")
+    #    socket = add_component(div, "ld-first-div", -1, socket)
+    #    modal = find_component_from_groups(groups, "core", "modal")
+    #    socket = add_component(modal, "ld-first-modal", -1, socket)
+    #    icon = find_component_from_groups(groups, "hero_icons", "academic_cap")
+    #    add_component(icon, "ld-first-icon", -1, socket)
+    socket
   end
 end
