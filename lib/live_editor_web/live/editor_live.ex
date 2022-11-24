@@ -87,7 +87,7 @@ defmodule LiveEditorWeb.EditorLive do
 
     socket =
       %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
-      |> component_changed(socket)
+      |> current_component_changed(socket)
 
     {:noreply, socket}
   end
@@ -104,7 +104,7 @@ defmodule LiveEditorWeb.EditorLive do
 
     socket =
       %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
-      |> component_changed(socket)
+      |> current_component_changed(socket)
 
     {:noreply, socket}
   end
@@ -119,7 +119,7 @@ defmodule LiveEditorWeb.EditorLive do
 
     socket =
       %{component | attrs: List.keyreplace(attrs, target, 0, {target, attr})}
-      |> component_changed(socket)
+      |> current_component_changed(socket)
 
     {:noreply, socket}
   end
@@ -211,6 +211,16 @@ defmodule LiveEditorWeb.EditorLive do
     {:reply, %{code: code}, socket}
   end
 
+  def handle_event("component_text_changed", %{"text" => value}, socket) do
+    %{select_id: id, select_component: component, meta_previews: meta_previews} = socket.assigns
+    Logger.info(inspect(component))
+    parent_id = component.parent_id
+    parent = find_component_from_meta(meta_previews, parent_id)
+    children = List.keyreplace(parent.children, id, 0, {id, %{component | value: value}})
+    socket = component_changed(parent_id, %{parent | children: children}, socket)
+    {:noreply, socket}
+  end
+
   def handle_event("save_file", _, socket) do
     socket = save_file(socket)
     {:noreply, socket}
@@ -240,6 +250,24 @@ defmodule LiveEditorWeb.EditorLive do
     List.insert_at(list, new_index, item)
   end
 
+  defp update_component_to_meta(meta_previews, id, component) do
+    Enum.reduce_while(meta_previews, nil, fn
+      {^id, _c}, _acc ->
+        {:halt, List.keyreplace(meta_previews, id, 0, {id, component})}
+
+      {i, c}, acc ->
+        Map.get(c, :children, [])
+        |> update_component_to_meta(id, component)
+        |> case do
+          nil ->
+            {:cont, acc}
+
+          children ->
+            {:halt, List.keyreplace(meta_previews, id, 0, {i, %{c | children: children}})}
+        end
+    end)
+  end
+
   defp find_component_from_meta(meta_previews, id) do
     Enum.find_value(meta_previews, fn
       {^id, component} ->
@@ -261,13 +289,14 @@ defmodule LiveEditorWeb.EditorLive do
     |> Map.put_new(:children, [])
   end
 
-  defp append_id_for_children(component, index) do
+  defp append_id_for_children(component, parent_id) do
     {children, index} =
-      Enum.map_reduce(component.children, index, fn child, acc ->
+      Enum.map_reduce(component.children, parent_id + 1, fn child, acc ->
         id = "ld-#{acc}"
+        child = Map.put(child, :parent_id, "ld-#{parent_id}")
 
         if child[:children] do
-          {child, acc} = append_id_for_children(child, acc + 1)
+          {child, acc} = append_id_for_children(child, acc)
           {{id, child}, acc + 1}
         else
           {{id, child}, acc + 1}
@@ -279,7 +308,7 @@ defmodule LiveEditorWeb.EditorLive do
 
   defp add_component(component, index, socket) do
     now = System.os_time(:millisecond)
-    component = append_id_for_children(component, now + 1) |> elem(0)
+    component = append_id_for_children(component, now) |> elem(0)
 
     case render_component(component) do
       {:error, error_msg} ->
@@ -302,20 +331,25 @@ defmodule LiveEditorWeb.EditorLive do
     end
   end
 
-  defp component_changed(component, socket) do
+  defp current_component_changed(component, socket) do
+    socket = assign(socket, select_component: component)
+    component_changed(socket.assigns.select_id, component, socket)
+  end
+
+  defp component_changed(id, component, socket) do
     case render_component(component) do
       {:error, _error_msg} ->
         # put_flash(socket, :error, error_msg)
         socket
 
       rendered ->
-        %{select_id: curr_id, previews: previews, meta_previews: meta_previews} = socket.assigns
-        meta_previews = List.keyreplace(meta_previews, curr_id, 0, {curr_id, component})
+        %{previews: previews, meta_previews: meta_previews} = socket.assigns
+        meta_previews = update_component_to_meta(meta_previews, id, component)
         preview = %{rendered: rendered, class: component[:preview_class]}
-        previews = List.keyreplace(previews, curr_id, 0, {curr_id, preview})
+        previews = List.keyreplace(previews, id, 0, {id, preview})
 
         socket
-        |> assign(select_component: component, previews: previews)
+        |> assign(previews: previews)
         |> meta_changed(meta_previews)
         |> maybe_show_code()
     end
@@ -479,7 +513,7 @@ defmodule LiveEditorWeb.EditorLive do
     slot = List.keyfind(slots, slot_name, 0) |> elem(1) |> Map.put(:value, content)
 
     %{component | slots: List.keyreplace(slots, slot_name, 0, {slot_name, slot})}
-    |> component_changed(socket)
+    |> current_component_changed(socket)
   end
 
   defp test_helper(socket) do

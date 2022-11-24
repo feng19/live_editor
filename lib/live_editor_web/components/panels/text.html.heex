@@ -1,0 +1,7 @@
+<.collapse label="Edit Text" show={true} >
+  <form class="flex flex-col space-y-4 p-2 w-full" phx-change="component_text_changed">
+    <textarea name="text" class="ld-input w-66">
+      <%= @component[:value] %>
+    </textarea>
+  </form>
+</.collapse>

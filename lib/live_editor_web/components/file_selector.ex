@@ -24,7 +24,12 @@ defmodule LiveEditorWeb.FileSelector do
           <div>
             <form phx-change="file_input_changed" phx-target={@myself}>
               <div class="input-group flex justify-center">
-                <input type="text" name="input_file" value={@input} class="input input-bordered w-5/6" />
+                <input
+                  type="text"
+                  name="input_file"
+                  value={@input}
+                  class="input input-bordered w-5/6"
+                />
               </div>
             </form>
           </div>
@@ -88,7 +93,8 @@ defmodule LiveEditorWeb.FileSelector do
       with {_, false} <- {:dir, File.dir?(filename)},
            {_, false} <- {:exists, File.exists?(filename)} do
         if type == "new" do
-          send(self(), {"new_file", filename})
+          path = remove_cwd_prefix(filename)
+          send(self(), {"new_file", path})
           push_event(socket, "hide_modal", %{id: assigns.id})
         else
           put_flash(socket, :error, "file not exists!")
@@ -100,7 +106,8 @@ defmodule LiveEditorWeb.FileSelector do
 
         {:exists, true} ->
           if type == "open" do
-            send(self(), {"open_file", filename})
+            path = remove_cwd_prefix(filename)
+            send(self(), {"open_file", path})
             push_event(socket, "hide_modal", %{id: assigns.id})
           else
             put_flash(socket, :error, "file already exists!")
@@ -153,6 +160,16 @@ defmodule LiveEditorWeb.FileSelector do
     case String.split(file, ".", parts: 2) do
       [^file] -> file <> ".html.heex"
       _other -> file
+    end
+  end
+
+  defp remove_cwd_prefix(path) do
+    path
+    |> String.trim_leading(File.cwd!())
+    |> case do
+      ^path -> path
+      "/" <> path -> path
+      path -> path
     end
   end
 end
