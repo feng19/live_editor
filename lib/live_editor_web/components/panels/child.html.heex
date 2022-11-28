@@ -10,8 +10,8 @@
     <!-- todo svg -->
     <span><%= @item.label %></span>
   </div>
-  <div class="ml-4" id={"navigator-tree-#{@item.id}"} data-group={@item.id} phx-hook="NavigatorDraggable">
-    <.nav_item :for={i<-@item.children} item={i} />
+  <div class="ml-4" id={"children-tree-#{@item.id}"} data-group={@item.id} phx-hook="ChildrenDraggable">
+    <.child :for={i<-@item.children} item={i} />
   </div>
 </div>
 <% end %>

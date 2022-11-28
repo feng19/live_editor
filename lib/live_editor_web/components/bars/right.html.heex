@@ -1,17 +1,19 @@
-<div id="ld-right-bar">
+<div id="ld-right-bar" x-data="{ tab: 'info' }">
   <%= if @select_id do %>
-    <div class="px-2 space-x-2 h-10 flex items-center">
-      <div class="text-lg select-all">
-        <%= @select_id %>
-      </div>
-      <button class="ld-btn" :if={is_nil(@code)} phx-click="show_code" value={@select_id}>
-        <Heroicons.code_bracket class="w-6" />
-      </button>
-      <button class="ld-btn" phx-click="remove_component" value={@select_id}>
-        <Heroicons.archive_box_x_mark class="w-6" />
-      </button>
-    </div>
-
+  <!-- tabs -->
+  <div class="tabs">
+    <button id="right-info-tab" class="tab" x-bind:class="{'active': tab == 'info'}" @click="tab = 'info'">
+      Info
+    </button>
+    <%= if @select_component[:type] != :text do %>
+    <button class="tab" x-bind:class="{'active': tab == 'children'}" @click="tab = 'children'">
+      Children
+    </button>
+    <% end %>
+  </div>
+  <!-- info panels -->
+  <div x-show="tab == 'info'" x-cloak x-transition>
+    <Panels.component_info code={@code} component={@select_component} id={@select_id}/>
     <%= if @select_component[:type] == :text do %>
     <Panels.text id={@select_id} component={@select_component}/>
     <% else %>
@@ -20,5 +22,14 @@
     <!-- slots -->
     <Panels.editor_slots :if={@select_component.slots !=[]} id={@select_id} slots={@select_component.slots}/>
     <% end %>
+  </div>
+  <!-- children panel -->
+  <%= if @select_component[:type] != :text do %>
+  <div class="p-4 text-sm" id="children-tree" data-group={@select_id} phx-hook="ChildrenDraggable"
+       phx-remove={JS.dispatch("click", to: "#right-info-tab")}
+       x-show="tab == 'children'" x-cloak x-transition>
+    <Panels.children id={@select_id} children={@select_children}/>
+  </div>
+  <% end %>
   <% end %>
 </div>

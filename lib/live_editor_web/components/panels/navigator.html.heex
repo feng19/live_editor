@@ -1,6 +1,6 @@
 <div id="ld-left-panel-navigator" class="ld-left-panel" x-show="open_panel == 'navigator'" x-cloak x-transition>
   <div class="m-4 text-2xl">Navigator</div>
-  <nav class="px-2">
+  <nav class="px-2 text-sm" id="navigator-tree" data-group="root" phx-hook="NavigatorDraggable">
     <.nav_item :for={item<-@nav_items} item={item} />
   </nav>
 </div>

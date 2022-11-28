@@ -40,7 +40,8 @@ defmodule LiveEditor.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:makeup, "~> 1.1"},
       {:makeup_elixir, "~> 0.16"},
-      {:makeup_eex, "~> 0.1"}
+      {:makeup_eex, "~> 0.1"},
+      {:extrace, "~> 0.3"}
     ]
   end
 

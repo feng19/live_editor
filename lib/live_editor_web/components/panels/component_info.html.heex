@@ -1,0 +1,15 @@
+<.collapse label="Info" show={true} >
+  <div class="m-auto text-lg text-center select-all p-2">
+    <%= @id %> <%= if name = @component[:name], do: "(#{name}})" %>
+  </div>
+  <div class="m-auto px-2 space-x-2 h-10 flex items-center justify-center">
+    <%= if @component[:type] != :text do %>
+    <button class="ld-btn" :if={is_nil(@code)} phx-click="show_code" value={@id}>
+      <Heroicons.code_bracket class="w-6" />
+    </button>
+    <button class="ld-btn" phx-click="remove_component" value={@id}>
+      <Heroicons.archive_box_x_mark class="w-6" />
+    </button>
+    <% end %>
+  </div>
+</.collapse>

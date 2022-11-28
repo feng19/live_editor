@@ -52,4 +52,25 @@ defmodule LiveEditor.UI.Helper do
       end
     end)
   end
+
+  def calc_nav_items(items) do
+    Enum.map(items, fn {id, component} ->
+      children = component |> Map.get(:children, []) |> calc_nav_items()
+
+      {label, _draggable} =
+        case component[:type] do
+          :text -> {"text", false}
+          _ -> {component.name, true}
+        end
+
+      %{id: id, label: label, draggable: true, children: children}
+    end)
+  end
+
+  def find_from_nav_items(nav_items, id) do
+    Enum.find_value(nav_items, fn
+      c = %{id: ^id} -> c
+      %{children: children} -> find_from_nav_items(children, id)
+    end)
+  end
 end

@@ -3,7 +3,7 @@ defmodule LiveEditorWeb.EditorLive do
   use LiveEditorWeb, :editor_live_view
   require Logger
   alias LiveEditorWeb.Bars
-  alias LiveEditor.{ComponentRender, CodeRender, UI}
+  alias LiveEditor.{ComponentRender, CodeRender, UI, Meta}
 
   def mount(_params, _session, socket) do
     left_bar_settings = [
@@ -16,7 +16,7 @@ defmodule LiveEditorWeb.EditorLive do
     groups = [
       %{label: "Base", name: "base", components: UI.Base.components()},
       %{label: "Core", name: "core", components: UI.Core.components()},
-      %{label: "Hero Icons", name: "hero_icons", components: UI.Heroicons.components()}
+      %{label: "Hero Icons", name: "hero_icons", components: UI.Heroicons.components(), cols: 5}
     ]
 
     socket =
@@ -30,6 +30,7 @@ defmodule LiveEditorWeb.EditorLive do
         all_code: nil,
         select_id: nil,
         select_component: nil,
+        select_children: [],
         previews: [],
         meta_previews: []
       )
@@ -40,9 +41,19 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   def handle_event("add_component", %{"group" => group, "name" => name} = params, socket) do
-    component = find_component_from_groups(socket.assigns.groups, group, name)
+    {id, component} = init_component(socket.assigns.groups, group, name)
     index = Map.get(params, "index", -1)
-    socket = add_component(component, index, socket)
+
+    socket =
+      case socket.assigns.select_component do
+        %{type: :text} ->
+          add_component(:root, id, component, index, socket)
+
+        _ ->
+          parent_id = Map.get(params, "to", :root)
+          add_component(parent_id, id, component, index, socket)
+      end
+
     {:noreply, socket}
   end
 
@@ -129,9 +140,17 @@ defmodule LiveEditorWeb.EditorLive do
 
     socket =
       if assigns.select_id != id do
-        component = find_component_from_meta(assigns.meta_previews, id)
-        breadcrumbs = calc_breadcrumbs(assigns.nav_items, id)
-        assign(socket, select_id: id, select_component: component, breadcrumbs: breadcrumbs)
+        component = Meta.find(assigns.meta_previews, id)
+        nav_items = assigns.nav_items
+        select_children = UI.Helper.find_from_nav_items(nav_items, id) |> Map.fetch!(:children)
+        breadcrumbs = calc_breadcrumbs(nav_items, id)
+
+        assign(socket,
+          select_id: id,
+          select_component: component,
+          select_children: select_children,
+          breadcrumbs: breadcrumbs
+        )
       else
         socket
       end
@@ -141,34 +160,56 @@ defmodule LiveEditorWeb.EditorLive do
 
   def handle_event(
         "update_sort",
-        %{"id" => _id, "old_index" => old_index, "new_index" => new_index},
+        %{
+          "id" => id,
+          "from" => from,
+          "to" => to,
+          "old_index" => old_index,
+          "new_index" => new_index
+        },
         socket
       ) do
-    assigns = socket.assigns
-    previews = update_sort(assigns.previews, old_index, new_index)
-    meta_previews = update_sort(assigns.meta_previews, old_index, new_index)
+    {from, to, changes} =
+      case {from, to} do
+        {"root", "root"} ->
+          {:root, :root, %{id => :move}}
+
+        {"root", _} ->
+          {:root, to, %{to => :rerender}}
+
+        {_, "root"} ->
+          {from, :root, %{id => :rerender, from => :rerender}}
+
+        _ ->
+          {from, to, %{id => :move, from => :rerender, to => :rerender}}
+      end
 
     socket =
-      socket
-      |> assign(previews: previews)
-      |> meta_changed(meta_previews)
+      socket.assigns.meta_previews
+      |> Meta.update_sort(id, from, to, old_index, new_index)
+      |> then(&meta_changed(socket, &1, changes))
+
+    {:noreply, socket}
+  end
+
+  def handle_event(
+        "update_sort",
+        %{"id" => id, "old_index" => old_index, "new_index" => new_index},
+        socket
+      ) do
+    socket =
+      socket.assigns.meta_previews
+      |> Meta.update_sort(old_index, new_index)
+      |> then(&meta_changed(socket, &1, %{id => :move}))
 
     {:noreply, socket}
   end
 
   def handle_event("remove_component", %{"value" => id}, socket) do
-    assigns = socket.assigns
-    meta_previews = List.keydelete(assigns.meta_previews, id, 0)
-    previews = List.keydelete(assigns.previews, id, 0)
-
     socket =
-      if assigns.select_id == id do
-        assign(socket, select_id: nil, select_component: nil)
-      else
-        socket
-      end
-      |> assign(previews: previews)
-      |> meta_changed(meta_previews)
+      socket.assigns.meta_previews
+      |> Meta.remove(id)
+      |> then(&meta_changed(socket, &1, %{id => :remove}))
 
     {:noreply, socket}
   end
@@ -212,12 +253,8 @@ defmodule LiveEditorWeb.EditorLive do
   end
 
   def handle_event("component_text_changed", %{"text" => value}, socket) do
-    %{select_id: id, select_component: component, meta_previews: meta_previews} = socket.assigns
-    Logger.info(inspect(component))
-    parent_id = component.parent_id
-    parent = find_component_from_meta(meta_previews, parent_id)
-    children = List.keyreplace(parent.children, id, 0, {id, %{component | value: value}})
-    socket = component_changed(parent_id, %{parent | children: children}, socket)
+    %{select_id: id, select_component: component} = socket.assigns
+    socket = component_changed(%{component | value: value}, id, socket)
     {:noreply, socket}
   end
 
@@ -245,54 +282,26 @@ defmodule LiveEditorWeb.EditorLive do
     {:noreply, socket}
   end
 
-  defp update_sort(list, old_index, new_index) do
-    {item, list} = List.pop_at(list, old_index)
-    List.insert_at(list, new_index, item)
+  defp init_component(groups, group, name) do
+    component =
+      groups
+      |> Enum.find(&match?(%{name: ^group}, &1))
+      |> Map.get(:components)
+      |> Enum.find(&match?(%{name: ^name}, &1))
+      |> UI.Helper.apply_example_preview()
+      |> Map.put_new(:children, [])
+
+    now = System.os_time(:millisecond)
+    component = append_id_for_children(component, now) |> elem(0)
+    {gen_id(now), component}
   end
 
-  defp update_component_to_meta(meta_previews, id, component) do
-    Enum.reduce_while(meta_previews, nil, fn
-      {^id, _c}, _acc ->
-        {:halt, List.keyreplace(meta_previews, id, 0, {id, component})}
-
-      {i, c}, acc ->
-        Map.get(c, :children, [])
-        |> update_component_to_meta(id, component)
-        |> case do
-          nil ->
-            {:cont, acc}
-
-          children ->
-            {:halt, List.keyreplace(meta_previews, id, 0, {i, %{c | children: children}})}
-        end
-    end)
-  end
-
-  defp find_component_from_meta(meta_previews, id) do
-    Enum.find_value(meta_previews, fn
-      {^id, component} ->
-        component
-
-      {_, component} ->
-        component
-        |> Map.get(:children, [])
-        |> find_component_from_meta(id)
-    end)
-  end
-
-  defp find_component_from_groups(groups, group, name) do
-    groups
-    |> Enum.find(&match?(%{name: ^group}, &1))
-    |> Map.get(:components)
-    |> Enum.find(&match?(%{name: ^name}, &1))
-    |> UI.Helper.apply_example_preview()
-    |> Map.put_new(:children, [])
-  end
+  defp gen_id(index), do: "ld-#{index}"
 
   defp append_id_for_children(component, parent_id) do
     {children, index} =
       Enum.map_reduce(component.children, parent_id + 1, fn child, acc ->
-        id = "ld-#{acc}"
+        id = gen_id(acc)
         child = Map.put(child, :parent_id, "ld-#{parent_id}")
 
         if child[:children] do
@@ -306,53 +315,27 @@ defmodule LiveEditorWeb.EditorLive do
     {%{component | children: children}, index}
   end
 
-  defp add_component(component, index, socket) do
-    now = System.os_time(:millisecond)
-    component = append_id_for_children(component, now) |> elem(0)
+  defp add_component(parent_id, id, component, index, socket) do
+    meta_previews = Meta.insert_at(socket.assigns.meta_previews, parent_id, index, id, component)
 
-    case render_component(component) do
-      {:error, error_msg} ->
-        put_flash(socket, :error, error_msg)
-
-      rendered ->
-        id = "ld-#{now}"
-        %{previews: previews, meta_previews: meta_previews} = socket.assigns
-        meta_previews = List.insert_at(meta_previews, index, {id, component})
-        preview = %{rendered: rendered, class: component[:preview_class]}
-        previews = List.insert_at(previews, index, {id, preview})
-
-        assign(socket,
-          code: nil,
-          select_id: id,
-          select_component: component,
-          previews: previews
-        )
-        |> meta_changed(meta_previews)
+    if parent_id == :root do
+      assign(socket, code: nil, select_id: id)
+    else
+      assign(socket, code: nil)
     end
+    |> meta_changed(meta_previews, %{id => :rerender})
   end
 
   defp current_component_changed(component, socket) do
-    socket = assign(socket, select_component: component)
-    component_changed(socket.assigns.select_id, component, socket)
+    component_changed(component, socket.assigns.select_id, socket)
   end
 
-  defp component_changed(id, component, socket) do
-    case render_component(component) do
-      {:error, _error_msg} ->
-        # put_flash(socket, :error, error_msg)
-        socket
+  defp component_changed(component, id, socket) do
+    meta_previews = Meta.update(socket.assigns.meta_previews, id, component)
 
-      rendered ->
-        %{previews: previews, meta_previews: meta_previews} = socket.assigns
-        meta_previews = update_component_to_meta(meta_previews, id, component)
-        preview = %{rendered: rendered, class: component[:preview_class]}
-        previews = List.keyreplace(previews, id, 0, {id, preview})
-
-        socket
-        |> assign(previews: previews)
-        |> meta_changed(meta_previews)
-        |> maybe_show_code()
-    end
+    socket
+    |> meta_changed(meta_previews, %{id => :rerender})
+    |> maybe_show_code()
   end
 
   defp components_to_meta(components, id_start) do
@@ -363,12 +346,93 @@ defmodule LiveEditorWeb.EditorLive do
     end)
   end
 
+  defp meta_changed(socket, meta_previews, changes) do
+    assigns = socket.assigns
+    %{meta_previews: old_meta_previews, previews: old_previews} = assigns
+
+    changes =
+      Enum.flat_map(changes, fn
+        {id, :remove} ->
+          case Meta.find_root_parent_id(old_meta_previews, id) do
+            :root -> [{id, :remove}]
+            root_parent_id -> [{id, :remove}, {root_parent_id, :rerender}]
+          end
+
+        {id, op} ->
+          case Meta.find_root_parent_id(meta_previews, id) do
+            :root -> [{id, op}]
+            root_parent_id -> [{id, op}, {root_parent_id, :rerender}]
+          end
+      end)
+      |> Map.new()
+
+    Enum.reduce_while(meta_previews, [], fn {id, component}, acc ->
+      case Map.get(changes, id) do
+        :rerender ->
+          case component_to_preview(component) do
+            error = {:error, _error_msg} -> {:halt, error}
+            preview -> {:cont, [{id, preview} | acc]}
+          end
+
+        :remove ->
+          {:cont, acc}
+
+        _ ->
+          old = List.keyfind(old_previews, id, 0)
+          {:cont, [old | acc]}
+      end
+    end)
+    |> case do
+      {:error, error_msg} ->
+        put_flash(socket, :error, error_msg)
+
+      previews ->
+        select_id = assigns.select_id
+
+        Enum.reduce(changes, socket, fn {id, op}, acc ->
+          if select_id == id do
+            case op do
+              :remove ->
+                assign(acc, code: nil, select_id: nil, select_component: nil)
+
+              :rerender ->
+                component = Meta.find(meta_previews, id)
+                assign(acc, select_component: component)
+
+              :move ->
+                component = Meta.find(meta_previews, id)
+                assign(acc, select_component: component)
+            end
+          else
+            if Meta.in_children?(assigns.select_component, id) do
+              select_component = Meta.find(meta_previews, select_id)
+              assign(acc, select_component: select_component)
+            else
+              acc
+            end
+          end
+        end)
+        |> assign(previews: Enum.reverse(previews))
+        |> meta_changed(meta_previews)
+    end
+  end
+
   defp meta_changed(socket, meta_previews) do
-    nav_items = calc_nav_items(meta_previews)
-    breadcrumbs = calc_breadcrumbs(nav_items, socket.assigns.select_id)
+    nav_items = UI.Helper.calc_nav_items(meta_previews)
+
+    {select_children, breadcrumbs} =
+      if select_id = socket.assigns.select_id do
+        {
+          UI.Helper.find_from_nav_items(nav_items, select_id) |> Map.fetch!(:children),
+          calc_breadcrumbs(nav_items, select_id)
+        }
+      else
+        {[], []}
+      end
 
     assign(
       socket,
+      select_children: select_children,
       meta_previews: meta_previews,
       nav_items: nav_items,
       breadcrumbs: breadcrumbs
@@ -380,21 +444,6 @@ defmodule LiveEditorWeb.EditorLive do
       rendered = render_component!(component)
       preview = %{rendered: rendered, class: component[:preview_class]}
       {id, preview}
-    end)
-  end
-
-  defp calc_nav_items(meta_previews) do
-    Enum.map(meta_previews, fn {id, component} ->
-      children = component |> Map.get(:children, []) |> calc_nav_items()
-
-      label =
-        if component[:type] == :text do
-          "text"
-        else
-          component.name
-        end
-
-      %{id: id, label: label, children: children}
     end)
   end
 
@@ -413,6 +462,13 @@ defmodule LiveEditorWeb.EditorLive do
           new -> {:halt, new ++ [label | acc]}
         end
     end)
+  end
+
+  defp component_to_preview(component) do
+    case render_component(component) do
+      error = {:error, _error_msg} -> error
+      rendered -> %{rendered: rendered, class: component[:preview_class]}
+    end
   end
 
   defp render_component!(component) do
@@ -518,11 +574,11 @@ defmodule LiveEditorWeb.EditorLive do
 
   defp test_helper(socket) do
     #    groups = socket.assigns.groups
-    #    div = find_component_from_groups(groups, "base", "div")
+    #    div = init_component(groups, "base", "div")
     #    socket = add_component(div, "ld-first-div", -1, socket)
-    #    modal = find_component_from_groups(groups, "core", "modal")
+    #    modal = init_component(groups, "core", "modal")
     #    socket = add_component(modal, "ld-first-modal", -1, socket)
-    #    icon = find_component_from_groups(groups, "hero_icons", "academic_cap")
+    #    icon = init_component(groups, "hero_icons", "academic_cap")
     #    add_component(icon, "ld-first-icon", -1, socket)
     socket
   end
