@@ -501,7 +501,14 @@ defmodule LiveEditorWeb.EditorLive do
     previews = meta_to_previews(meta_previews)
 
     socket
-    |> assign(previews: previews, file_path: file_path)
+    |> assign(
+      code: nil,
+      all_code: nil,
+      select_id: nil,
+      select_component: nil,
+      previews: previews,
+      file_path: file_path
+    )
     |> meta_changed(meta_previews)
   rescue
     reason ->
