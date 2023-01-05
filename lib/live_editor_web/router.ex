@@ -18,7 +18,7 @@ defmodule LiveEditorWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/editor", EditorLive, :index
+    live "/editor", EditorLive
   end
 
   # Other scopes may use custom stacks.

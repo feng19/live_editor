@@ -1,11 +1,11 @@
 <%= if Enum.empty?(@item.children) do %>
-<div class={"w-full items-center " <> if @item.draggable, do: "draggable", else: "draggable filtered"}
+<div class={["w-full items-center draggable", if(@item.draggable, do: "", else: "filtered")]}
      draggable={@item.draggable} data-id={@item.id}>
   <!-- todo svg -->
   <span class="w-full h-8 text-left"><%= @item.label %></span>
 </div>
 <% else %>
-<div class={if @item.draggable, do: "draggable", else: "draggable filtered"} draggable={@item.draggable} data-id={@item.id}>
+<div class={["draggable", if(@item.draggable, do: "", else: "filtered")]} draggable={@item.draggable} data-id={@item.id}>
   <div class="w-full items-center rounded-md py-2 text-left">
     <!-- todo svg -->
     <span><%= @item.label %></span>

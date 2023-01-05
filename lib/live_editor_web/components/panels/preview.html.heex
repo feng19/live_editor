@@ -1,5 +1,5 @@
 <div id="artboard" phx-hook="Draggable">
-  <div :for={{id, preview}<-@previews} id={id} draggable="true" class={"draggable #{preview.class}" <> if @select_id==id, do: " selected", else: "" }>
+  <div :for={{id, preview}<-@previews} id={id} draggable="true" class={["draggable #{preview.class}", if(@select_id==id, do: "selected")]}>
   <%= preview.rendered %>
   </div>
 </div>
